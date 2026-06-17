@@ -126,8 +126,10 @@ $('ibBeli').addEventListener('input', hitungHargaPcs);
 $('ibStok').addEventListener('input', hitungHargaPcs);
 
 function renderSelectStok() {
-  $('tsKode').innerHTML = '<option value="">— pilih barang —</option>' +
+  const opts = '<option value="">— pilih barang —</option>' +
     BARANG.map(b => `<option value="${b.kode}">${b.kode} · ${b.nama} (stok: ${safeInt(b.stok)})</option>`).join('');
+  $('tsKode').innerHTML = opts;
+  if ($('opKode')) $('opKode').innerHTML = opts;
 }
 
 /* ---------- INPUT BARANG ---------- */
@@ -201,14 +203,51 @@ window.hapusBarang = async (kode) => {
 
 /* ---------- TAMBAH STOK ---------- */
 $('btnTambahStok').onclick = async () => {
-  const kode = $('tsKode').value, qty = $('tsQty').value;
+  const kode = $('tsKode').value, qty = $('tsQty').value, harga_kulakan = $('tsHarga').value;
   const msg = $('tsMsg');
   if (!kode || !qty || Number(qty)<=0) { msg.className='msg err'; msg.textContent='Pilih barang & isi jumlah'; return; }
   msg.className='msg'; msg.textContent='Menyimpan...';
-  const r = await api('tambahStok', { kode, qty, user: CURRENT_USER.nama });
+  const r = await api('tambahStok', { kode, qty, harga_kulakan, user: CURRENT_USER.nama });
   if (r.ok) {
-    toast('Stok diperbarui', 'ok'); msg.className='msg ok'; msg.textContent=`${r.msg}. Stok sekarang: ${r.stok}`;
-    $('tsQty').value=''; loadBarang();
+    let t = `${r.msg}. Stok sekarang: ${r.stok}`;
+    if (Number(harga_kulakan) > 0) t += ` · modal/pcs jadi ${rp(r.modal)}`;
+    toast('Stok diperbarui', 'ok'); msg.className='msg ok'; msg.textContent=t;
+    $('tsQty').value=''; $('tsHarga').value=''; loadBarang();
+  } else { msg.className='msg err'; msg.textContent=r.msg; }
+};
+
+/* ---------- STOCK OPNAME ---------- */
+function refreshOpnameInfo() {
+  const kode = $('opKode').value;
+  const b = BARANG.find(x => String(x.kode) === String(kode));
+  $('opSistem').value = b ? safeInt(b.stok) : '';
+  hitungSelisihOpname();
+}
+function hitungSelisihOpname() {
+  const sistem = Number($('opSistem').value);
+  const fisik = $('opFisik').value;
+  const el = $('opSelisih');
+  if (fisik === '' || isNaN(Number(fisik)) || $('opSistem').value === '') { el.innerHTML = ''; return; }
+  const selisih = Number(fisik) - sistem;
+  if (selisih === 0) el.innerHTML = 'Selisih: <span>0 (sesuai)</span>';
+  else if (selisih > 0) el.innerHTML = `Selisih: <span class="lebih">+${selisih} (lebih dari sistem)</span>`;
+  else el.innerHTML = `Selisih: <span class="kurang">${selisih} (kurang dari sistem)</span>`;
+}
+$('opKode').addEventListener('change', refreshOpnameInfo);
+$('opFisik').addEventListener('input', hitungSelisihOpname);
+
+$('btnOpname').onclick = async () => {
+  const kode = $('opKode').value, fisik = $('opFisik').value, keterangan = $('opKet').value.trim();
+  const msg = $('opMsg');
+  if (!kode) { msg.className='msg err'; msg.textContent='Pilih barang dulu'; return; }
+  if (fisik === '' || Number(fisik) < 0) { msg.className='msg err'; msg.textContent='Isi jumlah fisik yang valid'; return; }
+  msg.className='msg'; msg.textContent='Menyimpan...';
+  const r = await api('stockOpname', { kode, fisik, keterangan, user: CURRENT_USER.nama });
+  if (r.ok) {
+    const ket = r.selisih === 0 ? 'sesuai' : (r.selisih > 0 ? `lebih ${r.selisih}` : `kurang ${Math.abs(r.selisih)}`);
+    toast('Stok disesuaikan', 'ok'); msg.className='msg ok'; msg.textContent=`${r.msg} ke ${r.stok} (${ket})`;
+    $('opFisik').value=''; $('opKet').value=''; $('opSelisih').innerHTML='';
+    await loadBarang(); refreshOpnameInfo();
   } else { msg.className='msg err'; msg.textContent=r.msg; }
 };
 
