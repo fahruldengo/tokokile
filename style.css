@@ -1,231 +1,192 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>SnackPOS — Sistem Penjualan Toko Snack</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.7.0/dist/tabler-icons.min.css">
-<link rel="stylesheet" href="style.css" />
-</head>
-<body>
+:root{
+  --bg:#f4f6fb; --surface:#ffffff; --ink:#1a2233; --muted:#6b7587;
+  --line:#e8ecf4; --primary:#4f46e5; --primary-d:#4338ca; --primary-soft:#eef0fe;
+  --green:#16a34a; --green-soft:#e7f6ec; --red:#dc2626; --red-soft:#fdeaea;
+  --amber:#d97706; --amber-soft:#fdf3e3; --radius:14px; --radius-sm:10px;
+  --shadow:0 1px 3px rgba(20,30,60,.06),0 8px 24px rgba(20,30,60,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;-webkit-font-smoothing:antialiased}
+.hidden{display:none !important}
+.mb{margin-bottom:12px}
 
-<!-- ============ LOGIN ============ -->
-<div id="loginPage" class="login-wrap">
-  <div class="login-card">
-    <div class="brand">
-      <div class="brand-logo"><i class="ti ti-shopping-bag"></i></div>
-      <h1>SnackPOS</h1>
-      <p>Sistem Penjualan Toko Snack</p>
-    </div>
-    <div class="field">
-      <label>Username</label>
-      <div class="input-icon"><i class="ti ti-user"></i><input id="loginUser" type="text" placeholder="masukkan username" autocomplete="username" /></div>
-    </div>
-    <div class="field">
-      <label>Password</label>
-      <div class="input-icon"><i class="ti ti-lock"></i><input id="loginPass" type="password" placeholder="masukkan password" autocomplete="current-password" /></div>
-    </div>
-    <button id="btnLogin" class="btn btn-primary btn-block"><i class="ti ti-login-2"></i> Masuk</button>
-    <p id="loginMsg" class="msg"></p>
-    <p class="hint">Demo: admin / admin123 &nbsp;·&nbsp; kasir / kasir123</p>
-  </div>
-</div>
+/* ---------- buttons / inputs ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:var(--radius-sm);padding:11px 18px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;transition:.15s}
+.btn i{font-size:18px}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-d)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.btn-ghost:hover{background:var(--bg);color:var(--ink)}
+.btn-block{width:100%}
+.btn:active{transform:scale(.98)}
+input,select{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;background:var(--surface);color:var(--ink);transition:.15s;outline:none}
+input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:6px}
+.field{margin-bottom:14px}
+.input-icon{position:relative}
+.input-icon i{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:18px}
+.input-icon input{padding-left:40px}
+.rp-mark{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;font-weight:700}
+.msg{font-size:13px;margin-top:10px;min-height:18px}
+.msg.err{color:var(--red)} .msg.ok{color:var(--green)}
 
-<!-- ============ APP ============ -->
-<div id="appPage" class="app hidden">
-  <aside class="sidebar">
-    <div class="side-brand"><i class="ti ti-shopping-bag"></i> <span>SnackPOS</span></div>
-    <nav class="menu">
-      <a class="nav-item active" data-page="dashboard"><i class="ti ti-layout-dashboard"></i> Dashboard</a>
-      <a class="nav-item" data-page="penjualan"><i class="ti ti-cash-register"></i> Penjualan</a>
-      <a class="nav-item" data-page="input"><i class="ti ti-package"></i> Input Barang</a>
-      <a class="nav-item" data-page="stok"><i class="ti ti-stack-2"></i> Tambah Stok</a>
-      <a class="nav-item" data-page="riwayat"><i class="ti ti-history"></i> Riwayat</a>
-      <a class="nav-item" data-page="hutang"><i class="ti ti-notebook"></i> Daftar Hutang</a>
-      <a class="nav-item" data-page="laba"><i class="ti ti-report-money"></i> Laba</a>
-    </nav>
-    <div class="side-foot">
-      <div class="user-box">
-        <div class="avatar" id="userAvatar">A</div>
-        <div><div class="uname" id="userName">User</div><div class="urole" id="userRole">role</div></div>
-      </div>
-      <button id="btnLogout" class="btn btn-ghost btn-block"><i class="ti ti-logout"></i> Keluar</button>
-    </div>
-  </aside>
+/* ---------- login ---------- */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%)}
+.login-card{background:var(--surface);border-radius:20px;padding:38px 34px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.brand{text-align:center;margin-bottom:26px}
+.brand-logo{width:60px;height:60px;border-radius:16px;background:var(--primary-soft);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 14px}
+.brand h1{font-size:24px;font-weight:700}
+.brand p{color:var(--muted);font-size:13px;margin-top:3px}
+.hint{text-align:center;font-size:12px;color:var(--muted);margin-top:16px}
 
-  <main class="content">
-    <header class="topbar">
-      <button id="menuToggle" class="icon-btn mobile-only"><i class="ti ti-menu-2"></i></button>
-      <h2 id="pageTitle">Dashboard</h2>
-      <button id="btnRefresh" class="icon-btn"><i class="ti ti-refresh"></i></button>
-    </header>
+/* ---------- app shell ---------- */
+.app{display:flex;min-height:100vh}
+.sidebar{width:248px;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:20px 16px;position:fixed;height:100vh;z-index:40;transition:.25s}
+.side-brand{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:700;padding:6px 8px 22px;color:var(--ink)}
+.side-brand i{color:var(--primary);font-size:24px}
+.menu{display:flex;flex-direction:column;gap:4px;flex:1}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:var(--radius-sm);color:var(--muted);font-weight:500;cursor:pointer;transition:.15s}
+.nav-item i{font-size:20px}
+.nav-item:hover{background:var(--bg);color:var(--ink)}
+.nav-item.active{background:var(--primary-soft);color:var(--primary);font-weight:600}
+.side-foot{border-top:1px solid var(--line);padding-top:14px}
+.user-box{display:flex;align-items:center;gap:11px;padding:8px;margin-bottom:8px}
+.avatar{width:38px;height:38px;border-radius:10px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+.uname{font-weight:600;font-size:13.5px}
+.urole{font-size:12px;color:var(--muted);text-transform:capitalize}
 
-    <!-- DASHBOARD -->
-    <section id="page-dashboard" class="page">
-      <div class="stat-grid">
-        <div class="stat-card"><span class="stat-label">Omzet Hari Ini</span><span class="stat-val" id="dOmzetHari">Rp0</span><i class="ti ti-trending-up stat-ic"></i></div>
-        <div class="stat-card"><span class="stat-label">Omzet Total</span><span class="stat-val" id="dOmzetTotal">Rp0</span><i class="ti ti-coin stat-ic"></i></div>
-        <div class="stat-card"><span class="stat-label">Laba Total</span><span class="stat-val" id="dLabaTotal" style="color:var(--green)">Rp0</span><i class="ti ti-trending-up stat-ic"></i></div>
-        <div class="stat-card"><span class="stat-label">Transaksi Hari Ini</span><span class="stat-val" id="dTrxHari">0</span><i class="ti ti-receipt stat-ic"></i></div>
-        <div class="stat-card"><span class="stat-label">Jenis Barang</span><span class="stat-val" id="dBarang">0</span><i class="ti ti-package stat-ic"></i></div>
-      </div>
-      <div class="dash-row">
-        <div class="card">
-          <div class="card-head"><h3>Omzet 7 Hari Terakhir</h3></div>
-          <canvas id="chartOmzet" height="120"></canvas>
-        </div>
-        <div class="card">
-          <div class="card-head"><h3>Produk Terlaris</h3></div>
-          <div id="topProduk" class="top-list"></div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-head"><h3><i class="ti ti-alert-triangle"></i> Stok Menipis (≤5)</h3></div>
-        <div id="stokMenipis" class="chip-row"></div>
-      </div>
-    </section>
+.content{flex:1;margin-left:248px;padding:0 26px 40px}
+.topbar{display:flex;align-items:center;gap:14px;padding:20px 0;position:sticky;top:0;background:var(--bg);z-index:20}
+.topbar h2{font-size:20px;font-weight:700;flex:1}
+.icon-btn{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px}
+.icon-btn:hover{color:var(--primary);border-color:var(--primary)}
+.mobile-only{display:none}
 
-    <!-- PENJUALAN -->
-    <section id="page-penjualan" class="page hidden">
-      <div class="dash-row">
-        <div class="card">
-          <div class="card-head"><h3>Pilih Barang</h3></div>
-          <div class="input-icon mb"><i class="ti ti-search"></i><input id="searchJual" placeholder="cari nama / kode barang..." /></div>
-          <div id="produkList" class="produk-grid"></div>
-        </div>
-        <div class="card">
-          <div class="card-head"><h3><i class="ti ti-shopping-cart"></i> Keranjang</h3></div>
-          <div id="cartList" class="cart-list"></div>
-          <div class="cart-total"><span>Total</span><strong id="cartTotal">Rp0</strong></div>
+/* ---------- cards ---------- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:20px}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-head h3{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.card-head h3 i{color:var(--amber);font-size:18px}
+.form-card{max-width:100%}
 
-          <div class="field"><label>Nama Pembeli</label>
-            <div class="input-icon"><i class="ti ti-user"></i><input id="jualPembeli" placeholder="Umum / nama pembeli" /></div>
-          </div>
+/* ---------- dashboard ---------- */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+.stat-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;position:relative;box-shadow:var(--shadow);overflow:hidden}
+.stat-label{font-size:12.5px;color:var(--muted);font-weight:500}
+.stat-val{display:block;font-size:24px;font-weight:700;margin-top:8px}
+.stat-ic{position:absolute;right:14px;top:16px;font-size:24px;color:var(--primary);opacity:.18}
+.dash-row{display:grid;grid-template-columns:1.6fr 1fr;gap:20px}
+.top-list{display:flex;flex-direction:column;gap:10px}
+.top-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg);border-radius:var(--radius-sm)}
+.top-item .rank{width:24px;height:24px;border-radius:7px;background:var(--primary-soft);color:var(--primary);font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;margin-right:10px}
+.top-item .nm{flex:1;font-weight:500;font-size:13px}
+.top-item .qt{font-weight:700;color:var(--primary)}
+.chip-row{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--red-soft);color:var(--red);padding:7px 13px;border-radius:20px;font-size:12.5px;font-weight:600}
+.chip.empty{background:var(--green-soft);color:var(--green)}
 
-          <div class="field"><label>Metode Bayar</label>
-            <div class="pay-methods">
-              <button type="button" class="pay-btn active" data-metode="tunai"><i class="ti ti-cash"></i> Tunai</button>
-              <button type="button" class="pay-btn" data-metode="transfer"><i class="ti ti-building-bank"></i> Transfer</button>
-              <button type="button" class="pay-btn" data-metode="hutang"><i class="ti ti-notebook"></i> Hutang</button>
-            </div>
-          </div>
+/* ---------- penjualan ---------- */
+.produk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;max-height:440px;overflow:auto}
+.produk-item{border:1px solid var(--line);border-radius:var(--radius-sm);padding:12px;cursor:pointer;transition:.15s}
+.produk-item:hover{border-color:var(--primary);background:var(--primary-soft)}
+.produk-item .pn{font-weight:600;font-size:13px;margin-bottom:4px}
+.produk-item .pp{color:var(--primary);font-weight:700;font-size:13px}
+.produk-item .ps{font-size:11.5px;color:var(--muted);margin-top:3px}
+.produk-item.out{opacity:.5;pointer-events:none}
+.cart-list{display:flex;flex-direction:column;gap:8px;min-height:120px;max-height:340px;overflow:auto;margin-bottom:14px}
+.cart-empty{color:var(--muted);text-align:center;padding:30px 0;font-size:13px}
+.cart-item{display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:var(--radius-sm);padding:9px 11px}
+.cart-item .ci-nm{flex:1;font-size:13px;font-weight:500}
+.cart-item .ci-pr{font-size:12px;color:var(--muted)}
+.qty-ctl{display:flex;align-items:center;gap:6px}
+.qty-ctl button{width:26px;height:26px;border:1px solid var(--line);background:var(--surface);border-radius:7px;cursor:pointer;font-size:16px;color:var(--ink);display:flex;align-items:center;justify-content:center}
+.qty-ctl span{min-width:20px;text-align:center;font-weight:600}
+.ci-del{color:var(--red);cursor:pointer;font-size:18px}
+.cart-total{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-top:1px solid var(--line);font-size:14px;margin-bottom:14px}
+.cart-total strong{font-size:20px;color:var(--primary)}
+.pay-methods{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pay-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:11px 6px;border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-sm);font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;transition:.15s}
+.pay-btn i{font-size:19px}
+.pay-btn:hover{border-color:var(--primary)}
+.pay-btn.active{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
+.kembalian-row{margin-top:8px;font-size:13px;color:var(--muted)}
+.kembalian-row strong{color:var(--green);font-size:15px}
 
-          <div class="field" id="bayarWrap"><label>Uang Dibayar</label>
-            <div class="input-icon"><span class="rp-mark">Rp</span><input id="jualBayar" type="number" placeholder="0" /></div>
-            <div class="kembalian-row" id="kembalianRow">Kembalian: <strong id="jualKembalian">Rp0</strong></div>
-          </div>
+/* ---------- tables ---------- */
+.form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:11px 12px;color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.3px;border-bottom:2px solid var(--line)}
+td{padding:11px 12px;border-bottom:1px solid var(--line)}
+tr:hover td{background:var(--bg)}
+.badge-stok{padding:3px 9px;border-radius:20px;font-size:12px;font-weight:600}
+.badge-stok.low{background:var(--red-soft);color:var(--red)}
+.badge-stok.ok{background:var(--green-soft);color:var(--green)}
+.badge-metode{padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600;text-transform:capitalize}
+.badge-metode.tunai{background:var(--green-soft);color:var(--green)}
+.badge-metode.transfer{background:var(--primary-soft);color:var(--primary)}
+.badge-metode.hutang{background:var(--red-soft);color:var(--red)}
+.filter-row{display:grid;grid-template-columns:1fr 1fr 1.5fr auto;gap:12px;align-items:end;margin-bottom:16px}
+.filter-row .btn{height:43px}
+.riwayat-sum{display:flex;gap:24px;padding:12px 14px;background:var(--bg);border-radius:var(--radius-sm);margin-bottom:14px;font-size:13px}
+.riwayat-sum strong{color:var(--primary)}
 
-          <button id="btnCheckout" class="btn btn-primary btn-block"><i class="ti ti-check"></i> Proses Penjualan</button>
-        </div>
-      </div>
-    </section>
+/* ---------- toast ---------- */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;padding:13px 22px;border-radius:12px;font-size:13.5px;font-weight:500;opacity:0;transition:.3s;z-index:100;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.err{background:var(--red)} .toast.ok{background:var(--green)}
 
-    <!-- INPUT BARANG -->
-    <section id="page-input" class="page hidden">
-      <div class="card form-card">
-        <div class="card-head"><h3>Input Barang Baru</h3></div>
-        <div class="form-grid">
-          <div class="field"><label>Kode Barang</label><input id="ibKode" placeholder="SNK001" /></div>
-          <div class="field"><label>Nama Barang</label><input id="ibNama" placeholder="Chitato 68g" /></div>
-          <div class="field"><label>Kategori</label><input id="ibKategori" placeholder="Keripik" /></div>
-          <div class="field"><label>Harga Beli (total)</label><input id="ibBeli" type="number" placeholder="8000" /></div>
-          <div class="field"><label>Stok Awal</label><input id="ibStok" type="number" placeholder="50" /></div>
-          <div class="field"><label>Harga Modal / pcs <span class="auto-tag">otomatis</span></label><input id="ibPcs" type="number" placeholder="0" readonly /></div>
-          <div class="field"><label>Harga Jual / pcs</label><input id="ibJual" type="number" placeholder="10000" /></div>
-        </div>
-        <button id="btnInputBarang" class="btn btn-primary"><i class="ti ti-plus"></i> Simpan Barang</button>
-        <p id="ibMsg" class="msg"></p>
-      </div>
-      <div class="card">
-        <div class="card-head"><h3>Daftar Barang</h3></div>
-        <div class="table-wrap"><table id="tblBarang"><thead><tr><th>Kode</th><th>Nama</th><th>Kategori</th><th>Beli</th><th>Modal/pcs</th><th>Jual</th><th>Stok</th></tr></thead><tbody></tbody></table></div>
-      </div>
-    </section>
+/* ---------- daftar hutang ---------- */
+.hutang-list{display:flex;flex-direction:column;gap:10px}
+.hutang-item{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 16px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface)}
+.hutang-item:hover{border-color:var(--red)}
+.hutang-name{font-weight:700;font-size:14px;display:flex;align-items:center;gap:6px}
+.hutang-name i{color:var(--muted);font-size:17px}
+.hutang-detail{font-size:12.5px;color:var(--ink);margin-top:3px}
+.hutang-meta{font-size:11.5px;color:var(--muted);margin-top:3px}
+.hutang-right{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex-shrink:0}
+.hutang-amount{font-size:17px;font-weight:700;color:var(--red)}
+.hutang-progress{font-size:11.5px;color:var(--green);margin-top:3px;font-weight:600}
+.hutang-btns{display:flex;gap:6px}
+.auto-tag{display:inline-block;background:var(--primary-soft);color:var(--primary);font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:5px;text-transform:none}
+.btn-sm{padding:7px 13px;font-size:12.5px}
+.btn-sm i{font-size:15px}
 
-    <!-- TAMBAH STOK -->
-    <section id="page-stok" class="page hidden">
-      <div class="card form-card">
-        <div class="card-head"><h3>Tambah Stok Barang</h3></div>
-        <div class="form-grid">
-          <div class="field"><label>Pilih Barang</label><select id="tsKode"></select></div>
-          <div class="field"><label>Jumlah Tambah</label><input id="tsQty" type="number" placeholder="20" /></div>
-        </div>
-        <button id="btnTambahStok" class="btn btn-primary"><i class="ti ti-stack-2"></i> Tambah Stok</button>
-        <p id="tsMsg" class="msg"></p>
-      </div>
-    </section>
+/* ---------- struk overlay ---------- */
+.struk-overlay{position:fixed;inset:0;background:rgba(20,30,60,.5);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px}
+.struk-box{background:#fff;border-radius:var(--radius);width:100%;max-width:340px;max-height:90vh;overflow:auto;padding:0}
+.struk-content{padding:22px 24px;font-family:'Courier New',monospace;color:#111}
+.struk-content h2{font-size:20px;text-align:center;margin:0;letter-spacing:1px}
+.sk-head{text-align:center;margin-bottom:10px}
+.sk-head p{font-size:12px;color:#555;margin-top:2px}
+.sk-meta{border-top:1px dashed #999;border-bottom:1px dashed #999;padding:8px 0;margin:8px 0}
+.sk-meta div{display:flex;justify-content:space-between;font-size:11.5px;padding:1px 0}
+.sk-meta span:first-child{color:#666}
+.sk-table{width:100%;border-collapse:collapse;margin:6px 0}
+.sk-table td{padding:4px 0;vertical-align:top;font-size:12.5px}
+.sk-r{text-align:right;white-space:nowrap}
+.sk-sub{font-size:10.5px;color:#777}
+.sk-line{display:flex;justify-content:space-between;font-size:12.5px;margin:4px 0}
+.sk-total{border-top:1px dashed #999;padding-top:8px;font-weight:700;font-size:15px;margin-top:8px}
+.sk-hutang span:last-child{font-weight:700;color:#c00}
+.sk-foot{text-align:center;margin-top:12px;border-top:1px dashed #999;padding-top:10px;font-size:11.5px;color:#555}
+.struk-actions{display:flex;gap:10px;padding:0 24px 22px}
+.struk-actions .btn{flex:1}
 
-    <!-- RIWAYAT -->
-    <section id="page-riwayat" class="page hidden">
-      <div class="card">
-        <div class="card-head"><h3>Riwayat Penjualan</h3></div>
-        <div class="filter-row">
-          <div class="field"><label>Dari Tanggal</label><input id="rwFrom" type="date" /></div>
-          <div class="field"><label>Sampai Tanggal</label><input id="rwTo" type="date" /></div>
-          <div class="field"><label>Cari</label><input id="rwQ" placeholder="nama / kode / id transaksi" /></div>
-          <button id="btnFilter" class="btn btn-primary"><i class="ti ti-filter"></i> Filter</button>
-        </div>
-        <div class="riwayat-sum"><span>Total ditemukan: <strong id="rwCount">0</strong></span><span>Total omzet: <strong id="rwSum">Rp0</strong></span></div>
-        <div class="table-wrap"><table id="tblRiwayat"><thead><tr><th>ID</th><th>Tanggal</th><th>Pembeli</th><th>Barang</th><th>Qty</th><th>Total</th><th>Metode</th><th>Kasir</th></tr></thead><tbody></tbody></table></div>
-      </div>
-    </section>
-
-    <!-- DAFTAR HUTANG -->
-    <section id="page-hutang" class="page hidden">
-      <div class="stat-grid" style="grid-template-columns:repeat(2,1fr);max-width:520px">
-        <div class="stat-card"><span class="stat-label">Total Sisa Hutang</span><span class="stat-val" id="hTotal">Rp0</span><i class="ti ti-cash-banknote stat-ic"></i></div>
-        <div class="stat-card"><span class="stat-label">Transaksi Belum Lunas</span><span class="stat-val" id="hCount">0</span><i class="ti ti-notebook stat-ic"></i></div>
-      </div>
-      <div class="card">
-        <div class="card-head"><h3><i class="ti ti-users"></i> Rekap Hutang per Pembeli</h3></div>
-        <div class="table-wrap"><table id="tblRekap"><thead><tr><th>Pembeli</th><th>Jml Trx</th><th>Total</th><th>Terbayar</th><th>Sisa</th></tr></thead><tbody></tbody></table></div>
-      </div>
-      <div class="card">
-        <div class="card-head"><h3>Daftar Hutang Belum Lunas</h3></div>
-        <div id="hutangList" class="hutang-list"></div>
-      </div>
-    </section>
-
-    <!-- LABA -->
-    <section id="page-laba" class="page hidden">
-      <div class="filter-row" style="grid-template-columns:1fr 1fr auto auto">
-        <div class="field"><label>Dari Tanggal</label><input id="lbFrom" type="date" /></div>
-        <div class="field"><label>Sampai Tanggal</label><input id="lbTo" type="date" /></div>
-        <button id="btnLabaFilter" class="btn btn-primary"><i class="ti ti-filter"></i> Filter</button>
-        <button id="btnLabaReset" class="btn btn-ghost"><i class="ti ti-x"></i> Reset</button>
-      </div>
-      <div class="stat-grid">
-        <div class="stat-card"><span class="stat-label">Total Laba</span><span class="stat-val" id="lbLaba" style="color:var(--green)">Rp0</span><i class="ti ti-trending-up stat-ic"></i></div>
-        <div class="stat-card"><span class="stat-label">Total Omzet</span><span class="stat-val" id="lbOmzet">Rp0</span><i class="ti ti-coin stat-ic"></i></div>
-        <div class="stat-card"><span class="stat-label">Total Modal</span><span class="stat-val" id="lbModal">Rp0</span><i class="ti ti-receipt stat-ic"></i></div>
-        <div class="stat-card"><span class="stat-label">Margin Laba</span><span class="stat-val" id="lbMargin">0%</span><i class="ti ti-percentage stat-ic"></i></div>
-      </div>
-      <div class="card">
-        <div class="card-head"><h3>Laba per Produk</h3></div>
-        <div class="table-wrap"><table id="tblLaba"><thead><tr><th>Produk</th><th>Qty Terjual</th><th>Omzet</th><th>Modal</th><th>Laba</th></tr></thead><tbody></tbody></table></div>
-      </div>
-    </section>
-  </main>
-</div>
-
-<!-- ============ STRUK / RECEIPT (untuk cetak) ============ -->
-<div id="strukOverlay" class="struk-overlay hidden">
-  <div class="struk-box">
-    <div id="strukContent" class="struk-content"></div>
-    <div class="struk-actions">
-      <button class="btn btn-ghost" onclick="tutupStruk()"><i class="ti ti-x"></i> Tutup</button>
-      <button class="btn btn-ghost" onclick="cetakStruk()"><i class="ti ti-printer"></i> Cetak</button>
-      <button class="btn btn-primary" onclick="downloadStrukPDF()"><i class="ti ti-download"></i> PDF</button>
-    </div>
-  </div>
-</div>
-
-<div id="toast" class="toast"></div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="app.js"></script>
-</body>
-</html>
+/* ---------- responsive ---------- */
+@media(max-width:900px){
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+  .dash-row{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:repeat(2,1fr)}
+  .filter-row{grid-template-columns:1fr 1fr}
+}
+@media(max-width:640px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0);box-shadow:0 0 0 100vmax rgba(0,0,0,.4)}
+  .content{margin-left:0;padding:0 16px 40px}
+  .mobile-only{display:flex}
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .form-grid{grid-template-columns:1fr}
+  .filter-row{grid-template-columns:1fr}
+}
