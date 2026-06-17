@@ -147,14 +147,32 @@
     <!-- TAMBAH STOK -->
     <section id="page-stok" class="page hidden">
       <div class="card form-card">
-        <div class="card-head"><h3>Tambah Stok Barang</h3></div>
+        <div class="card-head"><h3>Tambah Stok (Barang Masuk / Kulakan)</h3></div>
         <div class="form-grid">
           <div class="field"><label>Pilih Barang</label><select id="tsKode"></select></div>
-          <div class="field"><label>Jumlah Tambah</label><input id="tsQty" type="number" placeholder="20" /></div>
+          <div class="field"><label>Jumlah Masuk</label><input id="tsQty" type="number" placeholder="20" /></div>
+          <div class="field"><label>Harga Modal / pcs (kulakan baru) <span class="auto-tag">opsional</span></label>
+            <div class="input-icon"><span class="rp-mark">Rp</span><input id="tsHarga" type="number" placeholder="kosongkan jika sama" /></div>
+          </div>
         </div>
+        <p class="form-hint">Isi harga kulakan baru jika harga beli berubah. Modal/pcs akan dihitung ulang dengan rata-rata tertimbang.</p>
         <button id="btnTambahStok" class="btn btn-primary"><i class="ti ti-stack-2"></i> Tambah Stok</button>
         <p id="tsMsg" class="msg"></p>
       </div>
+
+      <div class="card form-card">
+        <div class="card-head"><h3><i class="ti ti-clipboard-check"></i> Stock Opname (Sesuaikan Stok Fisik)</h3></div>
+        <div class="form-grid">
+          <div class="field"><label>Pilih Barang</label><select id="opKode"></select></div>
+          <div class="field"><label>Stok di Sistem</label><input id="opSistem" readonly placeholder="-" /></div>
+          <div class="field"><label>Jumlah Fisik (hasil hitung)</label><input id="opFisik" type="number" placeholder="22" /></div>
+          <div class="field"><label>Keterangan</label><input id="opKet" placeholder="rusak / hilang / koreksi" /></div>
+        </div>
+        <div id="opSelisih" class="op-selisih"></div>
+        <button id="btnOpname" class="btn btn-primary"><i class="ti ti-checkbox"></i> Sesuaikan Stok</button>
+        <p id="opMsg" class="msg"></p>
+      </div>
+
       <div class="card">
         <div class="card-head"><h3>Daftar Barang</h3></div>
         <div class="table-wrap"><table id="tblBarangStok"><thead><tr><th>Kode</th><th>Nama</th><th>Kategori</th><th>Beli</th><th>Modal/pcs</th><th>Jual</th><th>Stok</th><th>Aksi</th></tr></thead><tbody></tbody></table></div>
