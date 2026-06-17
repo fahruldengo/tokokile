@@ -97,13 +97,23 @@ async function loadBarang() {
 }
 
 function renderTblBarang() {
-  const tb = $('tblBarang').querySelector('tbody');
-  tb.innerHTML = BARANG.map(b => `
+  const rows = BARANG.map(b => {
+    const stok = safeInt(b.stok);
+    const kode = String(b.kode).replace(/'/g, "\\'");
+    return `
     <tr>
       <td>${b.kode}</td><td>${b.nama}</td><td>${b.kategori}</td>
       <td>${rp(b.harga_beli)}</td><td>${rp(b.harga_pcs)}</td><td>${rp(b.harga_jual)}</td>
-      <td><span class="badge-stok ${safeInt(b.stok)<=5?'low':'ok'}">${safeInt(b.stok)}</span></td>
-    </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted)">Belum ada barang</td></tr>';
+      <td><span class="badge-stok ${stok<=5?'low':'ok'}">${stok}</span></td>
+      <td><div class="row-actions">
+        <button class="icon-act edit" title="Edit" onclick="bukaEdit('${kode}')"><i class="ti ti-edit"></i></button>
+        <button class="icon-act del" title="Hapus" onclick="hapusBarang('${kode}')"><i class="ti ti-trash"></i></button>
+      </div></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--muted)">Belum ada barang</td></tr>';
+  $('tblBarang').querySelector('tbody').innerHTML = rows;
+  const stokTbl = $('tblBarangStok');
+  if (stokTbl) stokTbl.querySelector('tbody').innerHTML = rows;
 }
 
 /* auto-hitung harga modal per pcs = harga beli / stok awal */
@@ -117,7 +127,7 @@ $('ibStok').addEventListener('input', hitungHargaPcs);
 
 function renderSelectStok() {
   $('tsKode').innerHTML = '<option value="">— pilih barang —</option>' +
-    BARANG.map(b => `<option value="${b.kode}">${b.kode} · ${b.nama} (stok: ${b.stok})</option>`).join('');
+    BARANG.map(b => `<option value="${b.kode}">${b.kode} · ${b.nama} (stok: ${safeInt(b.stok)})</option>`).join('');
 }
 
 /* ---------- INPUT BARANG ---------- */
@@ -136,6 +146,57 @@ $('btnInputBarang').onclick = async () => {
     ['ibKode','ibNama','ibKategori','ibBeli','ibPcs','ibJual','ibStok'].forEach(i=>$(i).value='');
     loadBarang();
   } else { msg.className='msg err'; msg.textContent=r.msg; }
+};
+
+/* ---------- EDIT & HAPUS BARANG ---------- */
+window.bukaEdit = (kode) => {
+  const b = BARANG.find(x => String(x.kode) === String(kode));
+  if (!b) return;
+  $('ebKode').value = b.kode;
+  $('ebNama').value = b.nama;
+  $('ebKategori').value = b.kategori === '-' ? '' : b.kategori;
+  $('ebBeli').value = Number(b.harga_beli) || 0;
+  $('ebStok').value = safeInt(b.stok);
+  $('ebPcs').value = Number(b.harga_pcs) || 0;
+  $('ebJual').value = Number(b.harga_jual) || 0;
+  $('ebMsg').textContent = '';
+  $('editOverlay').classList.remove('hidden');
+};
+window.tutupEdit = () => $('editOverlay').classList.add('hidden');
+
+/* auto-hitung modal/pcs di modal edit */
+function hitungHargaPcsEdit() {
+  const beli = Number($('ebBeli').value) || 0;
+  const stok = Number($('ebStok').value) || 0;
+  $('ebPcs').value = stok > 0 ? Math.round(beli / stok) : 0;
+}
+$('ebBeli').addEventListener('input', hitungHargaPcsEdit);
+$('ebStok').addEventListener('input', hitungHargaPcsEdit);
+
+$('btnSaveEdit').onclick = async () => {
+  const p = {
+    kode: $('ebKode').value.trim(), nama: $('ebNama').value.trim(),
+    kategori: $('ebKategori').value.trim(), harga_beli: $('ebBeli').value,
+    harga_pcs: $('ebPcs').value, harga_jual: $('ebJual').value, stok: $('ebStok').value
+  };
+  const msg = $('ebMsg');
+  if (!p.nama || !p.harga_jual) { msg.className='msg err'; msg.textContent='Nama & harga jual wajib diisi'; return; }
+  msg.className='msg'; msg.textContent='Menyimpan...';
+  const r = await api('editBarang', p);
+  if (r.ok) {
+    toast('Barang diperbarui', 'ok');
+    tutupEdit();
+    loadBarang();
+  } else { msg.className='msg err'; msg.textContent=r.msg; }
+};
+
+window.hapusBarang = async (kode) => {
+  const b = BARANG.find(x => String(x.kode) === String(kode));
+  const nama = b ? b.nama : kode;
+  if (!confirm(`Hapus barang "${nama}" (${kode})?\nData penjualan lama tidak ikut terhapus.`)) return;
+  const r = await api('hapusBarang', { kode });
+  if (r.ok) { toast('Barang dihapus', 'ok'); loadBarang(); }
+  else toast(r.msg, 'err');
 };
 
 /* ---------- TAMBAH STOK ---------- */
