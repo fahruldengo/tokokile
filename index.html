@@ -96,6 +96,24 @@
           <div class="card-head"><h3><i class="ti ti-shopping-cart"></i> Keranjang</h3></div>
           <div id="cartList" class="cart-list"></div>
           <div class="cart-total"><span>Total</span><strong id="cartTotal">Rp0</strong></div>
+
+          <div class="field"><label>Nama Pembeli</label>
+            <div class="input-icon"><i class="ti ti-user"></i><input id="jualPembeli" placeholder="Umum / nama pembeli" /></div>
+          </div>
+
+          <div class="field"><label>Metode Bayar</label>
+            <div class="pay-methods">
+              <button type="button" class="pay-btn active" data-metode="tunai"><i class="ti ti-cash"></i> Tunai</button>
+              <button type="button" class="pay-btn" data-metode="transfer"><i class="ti ti-building-bank"></i> Transfer</button>
+              <button type="button" class="pay-btn" data-metode="hutang"><i class="ti ti-notebook"></i> Hutang</button>
+            </div>
+          </div>
+
+          <div class="field" id="bayarWrap"><label>Uang Dibayar</label>
+            <div class="input-icon"><i class="ti ti-coin"></i><input id="jualBayar" type="number" placeholder="0" /></div>
+            <div class="kembalian-row" id="kembalianRow">Kembalian: <strong id="jualKembalian">Rp0</strong></div>
+          </div>
+
           <button id="btnCheckout" class="btn btn-primary btn-block"><i class="ti ti-check"></i> Proses Penjualan</button>
         </div>
       </div>
@@ -146,7 +164,7 @@
           <button id="btnFilter" class="btn btn-primary"><i class="ti ti-filter"></i> Filter</button>
         </div>
         <div class="riwayat-sum"><span>Total ditemukan: <strong id="rwCount">0</strong></span><span>Total omzet: <strong id="rwSum">Rp0</strong></span></div>
-        <div class="table-wrap"><table id="tblRiwayat"><thead><tr><th>ID</th><th>Tanggal</th><th>Barang</th><th>Qty</th><th>Harga</th><th>Total</th><th>Kasir</th></tr></thead><tbody></tbody></table></div>
+        <div class="table-wrap"><table id="tblRiwayat"><thead><tr><th>ID</th><th>Tanggal</th><th>Pembeli</th><th>Barang</th><th>Qty</th><th>Total</th><th>Metode</th><th>Kasir</th></tr></thead><tbody></tbody></table></div>
       </div>
     </section>
   </main>
