@@ -104,6 +104,13 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-b
 .ci-del{color:var(--red);cursor:pointer;font-size:18px}
 .cart-total{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-top:1px solid var(--line);font-size:14px;margin-bottom:14px}
 .cart-total strong{font-size:20px;color:var(--primary)}
+.pay-methods{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pay-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:11px 6px;border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-sm);font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;transition:.15s}
+.pay-btn i{font-size:19px}
+.pay-btn:hover{border-color:var(--primary)}
+.pay-btn.active{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
+.kembalian-row{margin-top:8px;font-size:13px;color:var(--muted)}
+.kembalian-row strong{color:var(--green);font-size:15px}
 
 /* ---------- tables ---------- */
 .form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px}
@@ -115,6 +122,10 @@ tr:hover td{background:var(--bg)}
 .badge-stok{padding:3px 9px;border-radius:20px;font-size:12px;font-weight:600}
 .badge-stok.low{background:var(--red-soft);color:var(--red)}
 .badge-stok.ok{background:var(--green-soft);color:var(--green)}
+.badge-metode{padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600;text-transform:capitalize}
+.badge-metode.tunai{background:var(--green-soft);color:var(--green)}
+.badge-metode.transfer{background:var(--primary-soft);color:var(--primary)}
+.badge-metode.hutang{background:var(--red-soft);color:var(--red)}
 .filter-row{display:grid;grid-template-columns:1fr 1fr 1.5fr auto;gap:12px;align-items:end;margin-bottom:16px}
 .filter-row .btn{height:43px}
 .riwayat-sum{display:flex;gap:24px;padding:12px 14px;background:var(--bg);border-radius:var(--radius-sm);margin-bottom:14px;font-size:13px}
