@@ -78,6 +78,8 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-b
 .stat-ic{position:absolute;right:14px;top:16px;font-size:24px;color:var(--primary);opacity:.18}
 .dash-row{display:grid;grid-template-columns:1.6fr 1fr;gap:20px}
 .top-list{display:flex;flex-direction:column;gap:10px}
+.chart-box{position:relative;height:240px;width:100%}
+.chart-box canvas{position:absolute;top:0;left:0;width:100%!important;height:100%!important}
 .top-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg);border-radius:var(--radius-sm)}
 .top-item .rank{width:24px;height:24px;border-radius:7px;background:var(--primary-soft);color:var(--primary);font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;margin-right:10px}
 .top-item .nm{flex:1;font-weight:500;font-size:13px}
