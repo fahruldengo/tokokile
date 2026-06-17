@@ -2,7 +2,7 @@
    SnackPOS — Frontend
    Ganti API_URL dengan URL Web App Google Apps Script kamu.
    ============================================================ */
-const API_URL = 'GANTI_DENGAN_URL_WEB_APP_KAMU';
+const API_URL = 'https://script.google.com/macros/s/AKfycbw1e3JlROpMwtq4vgqg2av-JaonnwEfRdLMbvoC9C8NgL9tjuHn6tED0GlYsCQz9Z8pyg/exec';
 
 let CURRENT_USER = null;
 let BARANG = [];
