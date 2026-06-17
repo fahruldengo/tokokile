@@ -20,6 +20,7 @@ const SHEET_USERS = 'Users';
 const SHEET_BARANG = 'Barang';
 const SHEET_PENJUALAN = 'Penjualan';
 const SHEET_STOK_LOG = 'StokLog';
+const SHEET_OPNAME = 'OpnameLog';
 
 // =================== SETUP (jalankan sekali) ===================
 function setupSheets() {
@@ -46,6 +47,11 @@ function setupSheets() {
   let s = ss.getSheetByName(SHEET_STOK_LOG) || ss.insertSheet(SHEET_STOK_LOG);
   s.clear();
   s.appendRow(['tanggal', 'kode', 'nama', 'qty_tambah', 'stok_akhir', 'user']);
+
+  // Opname Log
+  let o = ss.getSheetByName(SHEET_OPNAME) || ss.insertSheet(SHEET_OPNAME);
+  o.clear();
+  o.appendRow(['tanggal', 'kode', 'nama', 'stok_sistem', 'stok_fisik', 'selisih', 'keterangan', 'user']);
 
   SpreadsheetApp.getUi().alert('Setup selesai! Sheet sudah dibuat.');
 }
@@ -91,10 +97,12 @@ function doGet(e) {
       case 'editBarang':   result = editBarang(e.parameter); break;
       case 'hapusBarang':  result = hapusBarang(e.parameter); break;
       case 'tambahStok':   result = tambahStok(e.parameter); break;
+      case 'stockOpname':  result = stockOpname(e.parameter); break;
       case 'getBarang':    result = getBarang(); break;
       case 'jual':         result = jual(e.parameter); break;
       case 'riwayat':      result = riwayat(e.parameter); break;
       case 'hutang':       result = listHutang(); break;
+      case 'catatHutangLama': result = catatHutangLama(e.parameter); break;
       case 'bayarCicilan': result = bayarCicilan(e.parameter); break;
       case 'laba':         result = labaReport(e.parameter); break;
       case 'dashboard':    result = dashboard(); break;
@@ -164,14 +172,63 @@ function tambahStok(p) {
   const colKode = headers.indexOf('kode');
   const colStok = headers.indexOf('stok');
   const colNama = headers.indexOf('nama');
+  const colPcs = headers.indexOf('harga_pcs');
+  const qty = Number(p.qty) || 0;
+  const hargaKulakan = Number(p.harga_kulakan) || 0; // harga modal per pcs untuk barang yang masuk (opsional)
+
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][colKode]) === String(p.kode)) {
-      const baru = Number(data[i][colStok]) + Number(p.qty);
-      sh.getRange(i + 1, colStok + 1).setValue(baru);
+      const stokLama = Number(data[i][colStok]) || 0;
+      const stokBaru = stokLama + qty;
+      sh.getRange(i + 1, colStok + 1).setValue(stokBaru);
+
+      // jika harga kulakan diisi, hitung ulang modal/pcs pakai rata-rata tertimbang
+      let modalBaru = colPcs >= 0 ? Number(data[i][colPcs]) || 0 : 0;
+      if (hargaKulakan > 0 && colPcs >= 0) {
+        const totalNilai = (stokLama * modalBaru) + (qty * hargaKulakan);
+        const totalQty = stokLama + qty;
+        modalBaru = totalQty > 0 ? Math.round(totalNilai / totalQty) : hargaKulakan;
+        sh.getRange(i + 1, colPcs + 1).setValue(modalBaru);
+      }
+
       ss.getSheetByName(SHEET_STOK_LOG).appendRow([
-        nowStr(), p.kode, data[i][colNama], Number(p.qty), baru, p.user || '-'
+        nowStr(), p.kode, data[i][colNama], qty, stokBaru, p.user || '-'
       ]);
-      return { ok: true, msg: 'Stok ditambahkan', stok: baru };
+      return { ok: true, msg: 'Stok ditambahkan', stok: stokBaru, modal: modalBaru };
+    }
+  }
+  return { ok: false, msg: 'Kode barang tidak ditemukan' };
+}
+
+// Stock opname: timpa stok ke jumlah fisik hasil hitung, catat selisih.
+function stockOpname(p) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sh = ss.getSheetByName(SHEET_BARANG);
+  const data = sh.getDataRange().getValues();
+  const headers = data[0];
+  const colKode = headers.indexOf('kode');
+  const colStok = headers.indexOf('stok');
+  const colNama = headers.indexOf('nama');
+  const fisik = Number(p.fisik);
+  if (isNaN(fisik) || fisik < 0) return { ok: false, msg: 'Jumlah fisik tidak valid' };
+
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][colKode]) === String(p.kode)) {
+      const stokSistem = Number(data[i][colStok]) || 0;
+      const selisih = fisik - stokSistem; // positif=lebih, negatif=kurang
+      sh.getRange(i + 1, colStok + 1).setValue(fisik);
+
+      // catat ke OpnameLog (buat sheet jika belum ada)
+      let log = ss.getSheetByName(SHEET_OPNAME);
+      if (!log) {
+        log = ss.insertSheet(SHEET_OPNAME);
+        log.appendRow(['tanggal', 'kode', 'nama', 'stok_sistem', 'stok_fisik', 'selisih', 'keterangan', 'user']);
+      }
+      log.appendRow([
+        nowStr(), p.kode, data[i][colNama], stokSistem, fisik, selisih,
+        p.keterangan || '-', p.user || '-'
+      ]);
+      return { ok: true, msg: 'Stok disesuaikan', stok: fisik, selisih: selisih };
     }
   }
   return { ok: false, msg: 'Kode barang tidak ditemukan' };
@@ -293,6 +350,33 @@ function jual(p) {
   return { ok: true, msg: 'Transaksi sukses', id: id, total: grand, bayar: uangBayar, kembalian: kembalian };
 }
 
+// Catat hutang lama (dari sebelum sistem dibuat). Masuk ke sheet Penjualan sebagai
+// metode 'hutang', TANPA mengubah stok barang. Tidak terkait kode barang nyata.
+function catatHutangLama(p) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const penjualan = ss.getSheetByName(SHEET_PENJUALAN);
+  const pembeli = (p.pembeli || '').trim();
+  const total = Number(p.total) || 0;
+  const terbayar = Number(p.terbayar) || 0;
+  if (!pembeli) return { ok: false, msg: 'Nama pembeli wajib diisi' };
+  if (total <= 0) return { ok: false, msg: 'Nominal hutang harus lebih dari 0' };
+  if (terbayar > total) return { ok: false, msg: 'Terbayar tidak boleh melebihi total' };
+
+  const id = 'OLD' + new Date().getTime(); // prefix OLD = hutang lama
+  // pakai tanggal yang diberikan jika ada, jika tidak pakai sekarang
+  const tgl = p.tanggal ? p.tanggal : nowStr();
+  const ket = (p.keterangan || 'Hutang lama').trim();
+  const lunas = terbayar >= total ? 'lunas' : 'belum';
+
+  // kolom: id,tanggal,kode,nama,qty,harga_jual,harga_pcs,laba,total,kasir,pembeli,metode,bayar,kembalian,status,terbayar
+  // qty/harga_pcs/laba = 0 supaya tidak mempengaruhi laporan laba & stok
+  penjualan.appendRow([
+    id, tgl, '-', ket, 0, total, 0, 0, total,
+    p.kasir || '-', pembeli, 'hutang', '', '', lunas, terbayar
+  ]);
+  return { ok: true, msg: 'Hutang lama dicatat', id: id, sisa: Math.max(0, total - terbayar) };
+}
+
 function riwayat(p) {
   let data = sheetData(SHEET_PENJUALAN);
   const from = p.from ? new Date(p.from + ' 00:00:00') : null;
@@ -323,7 +407,7 @@ function listHutang() {
       trx[id] = {
         id: id, tanggal: r.tanggal, pembeli: r.pembeli || 'Umum',
         kasir: r.kasir, status: r.status || 'belum',
-        total: 0, terbayar: 0, items: []
+        total: 0, terbayar: 0, items: [], isLama: String(id).indexOf('OLD') === 0
       };
     }
     trx[id].total += Number(r.total);
@@ -422,6 +506,7 @@ function labaReport(p) {
   const from = p.from ? new Date(p.from + ' 00:00:00') : null;
   const to = p.to ? new Date(p.to + ' 23:59:59') : null;
   data = data.filter(r => {
+    if (String(r.id).indexOf('OLD') === 0) return false; // hutang lama bukan penjualan nyata
     const t = new Date(r.tanggal);
     if (from && t < from) return false;
     if (to && t > to) return false;
@@ -462,6 +547,7 @@ function dashboard() {
   const perTanggal = {};
 
   penjualan.forEach(r => {
+    if (String(r.id).indexOf('OLD') === 0) return; // hutang lama tidak dihitung sebagai omzet/penjualan
     omzetTotal += Number(r.total);
     labaTotal += Number(r.laba) || 0;
     qtyTotal += Number(r.qty);
