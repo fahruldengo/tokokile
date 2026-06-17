@@ -62,7 +62,7 @@ function enterApp() {
 }
 
 /* ---------- NAVIGASI ---------- */
-const titles = { dashboard:'Dashboard', penjualan:'Penjualan', input:'Input Barang', stok:'Tambah Stok', riwayat:'Riwayat Penjualan', hutang:'Daftar Hutang' };
+const titles = { dashboard:'Dashboard', penjualan:'Penjualan', input:'Input Barang', stok:'Tambah Stok', riwayat:'Riwayat Penjualan', hutang:'Daftar Hutang', laba:'Laba' };
 document.querySelectorAll('.nav-item').forEach(item => {
   item.onclick = () => {
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -75,6 +75,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
     if (page === 'dashboard') loadDashboard();
     if (page === 'riwayat') loadRiwayat();
     if (page === 'hutang') loadHutang();
+    if (page === 'laba') loadLaba();
   };
 });
 $('menuToggle').onclick = () => document.querySelector('.sidebar').classList.toggle('open');
@@ -98,10 +99,19 @@ function renderTblBarang() {
   tb.innerHTML = BARANG.map(b => `
     <tr>
       <td>${b.kode}</td><td>${b.nama}</td><td>${b.kategori}</td>
-      <td>${rp(b.harga_beli)}</td><td>${rp(b.harga_jual)}</td>
+      <td>${rp(b.harga_beli)}</td><td>${rp(b.harga_pcs)}</td><td>${rp(b.harga_jual)}</td>
       <td><span class="badge-stok ${Number(b.stok)<=5?'low':'ok'}">${b.stok}</span></td>
-    </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted)">Belum ada barang</td></tr>';
+    </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted)">Belum ada barang</td></tr>';
 }
+
+/* auto-hitung harga modal per pcs = harga beli / stok awal */
+function hitungHargaPcs() {
+  const beli = Number($('ibBeli').value) || 0;
+  const stok = Number($('ibStok').value) || 0;
+  $('ibPcs').value = stok > 0 ? Math.round(beli / stok) : 0;
+}
+$('ibBeli').addEventListener('input', hitungHargaPcs);
+$('ibStok').addEventListener('input', hitungHargaPcs);
 
 function renderSelectStok() {
   $('tsKode').innerHTML = '<option value="">— pilih barang —</option>' +
@@ -113,7 +123,7 @@ $('btnInputBarang').onclick = async () => {
   const p = {
     kode: $('ibKode').value.trim(), nama: $('ibNama').value.trim(),
     kategori: $('ibKategori').value.trim(), harga_beli: $('ibBeli').value,
-    harga_jual: $('ibJual').value, stok: $('ibStok').value
+    harga_pcs: $('ibPcs').value, harga_jual: $('ibJual').value, stok: $('ibStok').value
   };
   const msg = $('ibMsg');
   if (!p.kode || !p.nama || !p.harga_jual) { msg.className='msg err'; msg.textContent='Kode, nama & harga jual wajib diisi'; return; }
@@ -121,7 +131,7 @@ $('btnInputBarang').onclick = async () => {
   const r = await api('inputBarang', p);
   if (r.ok) {
     toast('Barang ditambahkan', 'ok'); msg.className='msg ok'; msg.textContent=r.msg;
-    ['ibKode','ibNama','ibKategori','ibBeli','ibJual','ibStok'].forEach(i=>$(i).value='');
+    ['ibKode','ibNama','ibKategori','ibBeli','ibPcs','ibJual','ibStok'].forEach(i=>$(i).value='');
     loadBarang();
   } else { msg.className='msg err'; msg.textContent=r.msg; }
 };
@@ -260,6 +270,7 @@ async function loadDashboard() {
   const d = r.data;
   $('dOmzetHari').textContent = rp(d.omzetHariIni);
   $('dOmzetTotal').textContent = rp(d.omzetTotal);
+  $('dLabaTotal').textContent = rp(d.labaTotal || 0);
   $('dTrxHari').textContent = d.trxHariIni;
   $('dBarang').textContent = d.totalBarang;
 
@@ -317,8 +328,10 @@ $('btnFilter').onclick = loadRiwayat;
 
 /* ---------- STRUK / RECEIPT ---------- */
 const metodeLabel = { tunai:'TUNAI', transfer:'TRANSFER', hutang:'HUTANG' };
+let LAST_STRUK = null;
 
 function tampilStruk(t) {
+  LAST_STRUK = t;
   const tgl = new Date(t.tanggal);
   const tglStr = tgl.toLocaleString('id-ID', { dateStyle:'medium', timeStyle:'short' });
   const baris = t.items.map(i =>
@@ -330,7 +343,13 @@ function tampilStruk(t) {
     bayarHtml = `<div class="sk-line"><span>Bayar</span><span>${rp(t.bayar)}</span></div>
                  <div class="sk-line"><span>Kembali</span><span>${rp(t.kembalian)}</span></div>`;
   } else if (t.metode === 'hutang') {
-    bayarHtml = `<div class="sk-line sk-hutang"><span>Status</span><span>BELUM LUNAS</span></div>`;
+    if (t.cicilan) {
+      bayarHtml = `<div class="sk-line"><span>Cicilan ini</span><span>${rp(t.cicilan)}</span></div>
+                   <div class="sk-line"><span>Total terbayar</span><span>${rp(t.terbayar)}</span></div>
+                   <div class="sk-line sk-hutang"><span>Sisa hutang</span><span>${rp(t.sisa)}</span></div>`;
+    } else {
+      bayarHtml = `<div class="sk-line sk-hutang"><span>Status</span><span>BELUM LUNAS</span></div>`;
+    }
   } else {
     bayarHtml = `<div class="sk-line"><span>Pembayaran</span><span>TRANSFER</span></div>`;
   }
@@ -345,7 +364,7 @@ function tampilStruk(t) {
       <div><span>Tanggal</span><span>${tglStr}</span></div>
       <div><span>Pembeli</span><span>${t.pembeli}</span></div>
       <div><span>Kasir</span><span>${t.kasir}</span></div>
-      <div><span>Metode</span><span>${metodeLabel[t.metode]}</span></div>
+      <div><span>Metode</span><span>${metodeLabel[t.metode]}${t.cicilan?' (cicilan)':''}</span></div>
     </div>
     <table class="sk-table"><tbody>${baris}</tbody></table>
     <div class="sk-line sk-total"><span>TOTAL</span><span>${rp(t.total)}</span></div>
@@ -376,37 +395,160 @@ window.cetakStruk = () => {
   setTimeout(() => { w.print(); w.close(); }, 300);
 };
 
-/* ---------- DAFTAR HUTANG ---------- */
+window.downloadStrukPDF = () => {
+  const t = LAST_STRUK;
+  if (!t) { toast('Tidak ada struk', 'err'); return; }
+  const { jsPDF } = window.jspdf;
+  // struk thermal 58mm => 58 x dynamic
+  const lebar = 58;
+  const tinggi = 90 + t.items.length * 8 + (t.metode === 'tunai' ? 16 : 12);
+  const doc = new jsPDF({ unit:'mm', format:[lebar, tinggi] });
+  let y = 8;
+  const cx = lebar / 2;
+  const tglStr = new Date(t.tanggal).toLocaleString('id-ID', { dateStyle:'medium', timeStyle:'short' });
+
+  doc.setFont('courier','bold'); doc.setFontSize(13);
+  doc.text('SnackPOS', cx, y, { align:'center' }); y += 4;
+  doc.setFont('courier','normal'); doc.setFontSize(8);
+  doc.text('Toko Snack', cx, y, { align:'center' }); y += 4;
+  doc.text('--------------------------------', cx, y, { align:'center' }); y += 4;
+
+  doc.setFontSize(7.5);
+  const meta = [['No', t.id], ['Tanggal', tglStr], ['Pembeli', t.pembeli], ['Kasir', t.kasir], ['Metode', metodeLabel[t.metode]]];
+  meta.forEach(m => { doc.text(m[0], 3, y); doc.text(String(m[1]), lebar-3, y, { align:'right' }); y += 3.5; });
+  doc.text('--------------------------------', cx, y, { align:'center' }); y += 4;
+
+  doc.setFontSize(8);
+  t.items.forEach(i => {
+    doc.text(i.nama.substring(0,24), 3, y); y += 3.3;
+    doc.setFontSize(7);
+    doc.text(`${i.qty} x ${rp(i.harga)}`, 3, y);
+    doc.text(rp(i.sub), lebar-3, y, { align:'right' });
+    doc.setFontSize(8); y += 4;
+  });
+  doc.text('--------------------------------', cx, y, { align:'center' }); y += 4;
+
+  doc.setFont('courier','bold'); doc.setFontSize(9);
+  doc.text('TOTAL', 3, y); doc.text(rp(t.total), lebar-3, y, { align:'right' }); y += 4.5;
+  doc.setFont('courier','normal'); doc.setFontSize(8);
+
+  if (t.metode === 'tunai') {
+    doc.text('Bayar', 3, y); doc.text(rp(t.bayar), lebar-3, y, { align:'right' }); y += 3.5;
+    doc.text('Kembali', 3, y); doc.text(rp(t.kembalian), lebar-3, y, { align:'right' }); y += 3.5;
+  } else if (t.metode === 'hutang') {
+    if (t.cicilan) {
+      doc.text('Cicilan', 3, y); doc.text(rp(t.cicilan), lebar-3, y, { align:'right' }); y += 3.5;
+      doc.text('Sisa', 3, y); doc.text(rp(t.sisa), lebar-3, y, { align:'right' }); y += 3.5;
+    } else {
+      doc.text('Status', 3, y); doc.text('BELUM LUNAS', lebar-3, y, { align:'right' }); y += 3.5;
+    }
+  } else {
+    doc.text('Pembayaran', 3, y); doc.text('TRANSFER', lebar-3, y, { align:'right' }); y += 3.5;
+  }
+  y += 2;
+  doc.setFontSize(7);
+  doc.text('Terima kasih', cx, y, { align:'center' });
+
+  doc.save(`struk-${t.id}.pdf`);
+  toast('Struk PDF diunduh', 'ok');
+};
+
+/* ---------- DAFTAR HUTANG + CICILAN ---------- */
 async function loadHutang() {
   const r = await api('hutang'); if (!r.ok) return;
   $('hTotal').textContent = rp(r.totalHutang);
   $('hCount').textContent = r.data.length;
+
+  // rekap per pembeli
+  const tbR = $('tblRekap').querySelector('tbody');
+  tbR.innerHTML = (r.rekap && r.rekap.length) ? r.rekap.map(x => `
+    <tr><td>${x.pembeli}</td><td>${x.jml}</td><td>${rp(x.total)}</td><td>${rp(x.terbayar)}</td>
+    <td><strong style="color:var(--red)">${rp(x.sisa)}</strong></td></tr>`).join('')
+    : '<tr><td colspan="5" style="text-align:center;color:var(--muted)">Tidak ada hutang</td></tr>';
+
   const el = $('hutangList');
   if (!r.data.length) { el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">Tidak ada hutang. Semua lunas!</p>'; return; }
-  el.innerHTML = r.data.map(t => {
+  el.innerHTML = r.data.map((t, idx) => {
     const tglStr = new Date(t.tanggal).toLocaleString('id-ID', { dateStyle:'medium', timeStyle:'short' });
     const detail = t.items.map(i => `${i.nama} (${i.qty}×)`).join(', ');
+    HUTANG_CACHE[t.id] = t;
     return `
     <div class="hutang-item">
       <div class="hutang-main">
         <div class="hutang-name"><i class="ti ti-user"></i> ${t.pembeli}</div>
         <div class="hutang-detail">${detail}</div>
         <div class="hutang-meta">${t.id} · ${tglStr} · kasir ${t.kasir}</div>
+        <div class="hutang-progress">Terbayar ${rp(t.terbayar)} / ${rp(t.total)}</div>
       </div>
       <div class="hutang-right">
-        <div class="hutang-amount">${rp(t.total)}</div>
-        <button class="btn btn-primary btn-sm" onclick="lunasi('${t.id}','${t.pembeli.replace(/'/g,'')}')"><i class="ti ti-check"></i> Lunasi</button>
+        <div class="hutang-amount">${rp(t.sisa)}</div>
+        <div class="hutang-btns">
+          <button class="btn btn-ghost btn-sm" onclick="cetakHutang('${t.id}')"><i class="ti ti-download"></i> Struk</button>
+          <button class="btn btn-primary btn-sm" onclick="bukaCicilan('${t.id}')"><i class="ti ti-cash"></i> Bayar</button>
+        </div>
       </div>
     </div>`;
   }).join('');
 }
 
-window.lunasi = async (id, pembeli) => {
-  if (!confirm(`Tandai hutang ${pembeli} (${id}) sebagai LUNAS?`)) return;
-  const r = await api('lunasiHutang', { id });
-  if (r.ok) { toast('Hutang lunas', 'ok'); loadHutang(); loadDashboard(); }
-  else toast(r.msg, 'err');
+const HUTANG_CACHE = {};
+
+window.bukaCicilan = (id) => {
+  const t = HUTANG_CACHE[id];
+  if (!t) return;
+  const input = prompt(`Bayar cicilan untuk ${t.pembeli}\nSisa hutang: ${rp(t.sisa)}\n\nMasukkan jumlah bayar (kosongkan = lunasi semua):`, t.sisa);
+  if (input === null) return;
+  const jumlah = input.trim() === '' ? t.sisa : Number(input);
+  if (isNaN(jumlah) || jumlah <= 0) { toast('Jumlah tidak valid', 'err'); return; }
+  prosesCicilan(id, jumlah);
 };
+
+async function prosesCicilan(id, jumlah) {
+  const r = await api('bayarCicilan', { id, jumlah });
+  if (r.ok) {
+    toast(r.lunas ? 'Hutang LUNAS' : `Cicilan ${rp(jumlah)} tercatat`, 'ok');
+    // tampilkan struk cicilan
+    const t = HUTANG_CACHE[id];
+    tampilStruk({
+      id: id, tanggal: new Date(), pembeli: t.pembeli, metode: 'hutang',
+      items: t.items.map(i => ({ nama:i.nama, qty:i.qty, harga:i.harga, sub:i.sub })),
+      total: t.total, cicilan: jumlah, terbayar: r.terbayar, sisa: r.sisa,
+      kasir: CURRENT_USER.nama
+    });
+    loadHutang(); loadDashboard();
+  } else toast(r.msg, 'err');
+}
+
+window.cetakHutang = (id) => {
+  const t = HUTANG_CACHE[id];
+  if (!t) return;
+  tampilStruk({
+    id: id, tanggal: t.tanggal, pembeli: t.pembeli, metode: 'hutang',
+    items: t.items.map(i => ({ nama:i.nama, qty:i.qty, harga:i.harga, sub:i.sub })),
+    total: t.total, cicilan: t.terbayar > 0 ? t.terbayar : null,
+    terbayar: t.terbayar, sisa: t.sisa, kasir: t.kasir
+  });
+};
+
+/* ---------- LABA ---------- */
+async function loadLaba() {
+  const params = {};
+  if ($('lbFrom').value) params.from = $('lbFrom').value;
+  if ($('lbTo').value) params.to = $('lbTo').value;
+  const r = await api('laba', params); if (!r.ok) return;
+  const s = r.summary;
+  $('lbLaba').textContent = rp(s.totalLaba);
+  $('lbOmzet').textContent = rp(s.totalOmzet);
+  $('lbModal').textContent = rp(s.totalModal);
+  $('lbMargin').textContent = (Math.round(s.margin * 10) / 10) + '%';
+  const tb = $('tblLaba').querySelector('tbody');
+  tb.innerHTML = r.data.length ? r.data.map(x => `
+    <tr><td>${x.nama}</td><td>${x.qty}</td><td>${rp(x.omzet)}</td><td>${rp(x.modal)}</td>
+    <td><strong style="color:var(--green)">${rp(x.laba)}</strong></td></tr>`).join('')
+    : '<tr><td colspan="5" style="text-align:center;color:var(--muted)">Belum ada data</td></tr>';
+}
+$('btnLabaFilter').onclick = loadLaba;
+$('btnLabaReset').onclick = () => { $('lbFrom').value=''; $('lbTo').value=''; loadLaba(); };
 
 /* ---------- AUTO LOGIN ---------- */
 (function init() {
