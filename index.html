@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SnackPOS — Sistem Penjualan Toko Snack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.7.0/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="loginPage" class="login-wrap">
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-logo"><i class="ti ti-shopping-bag"></i></div>
+      <h1>SnackPOS</h1>
+      <p>Sistem Penjualan Toko Snack</p>
+    </div>
+    <div class="field">
+      <label>Username</label>
+      <div class="input-icon"><i class="ti ti-user"></i><input id="loginUser" type="text" placeholder="masukkan username" autocomplete="username" /></div>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <div class="input-icon"><i class="ti ti-lock"></i><input id="loginPass" type="password" placeholder="masukkan password" autocomplete="current-password" /></div>
+    </div>
+    <button id="btnLogin" class="btn btn-primary btn-block"><i class="ti ti-login-2"></i> Masuk</button>
+    <p id="loginMsg" class="msg"></p>
+    <p class="hint">Demo: admin / admin123 &nbsp;·&nbsp; kasir / kasir123</p>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="appPage" class="app hidden">
+  <aside class="sidebar">
+    <div class="side-brand"><i class="ti ti-shopping-bag"></i> <span>SnackPOS</span></div>
+    <nav class="menu">
+      <a class="nav-item active" data-page="dashboard"><i class="ti ti-layout-dashboard"></i> Dashboard</a>
+      <a class="nav-item" data-page="penjualan"><i class="ti ti-cash-register"></i> Penjualan</a>
+      <a class="nav-item" data-page="input"><i class="ti ti-package"></i> Input Barang</a>
+      <a class="nav-item" data-page="stok"><i class="ti ti-stack-2"></i> Tambah Stok</a>
+      <a class="nav-item" data-page="riwayat"><i class="ti ti-history"></i> Riwayat</a>
+    </nav>
+    <div class="side-foot">
+      <div class="user-box">
+        <div class="avatar" id="userAvatar">A</div>
+        <div><div class="uname" id="userName">User</div><div class="urole" id="userRole">role</div></div>
+      </div>
+      <button id="btnLogout" class="btn btn-ghost btn-block"><i class="ti ti-logout"></i> Keluar</button>
+    </div>
+  </aside>
+
+  <main class="content">
+    <header class="topbar">
+      <button id="menuToggle" class="icon-btn mobile-only"><i class="ti ti-menu-2"></i></button>
+      <h2 id="pageTitle">Dashboard</h2>
+      <button id="btnRefresh" class="icon-btn"><i class="ti ti-refresh"></i></button>
+    </header>
+
+    <!-- DASHBOARD -->
+    <section id="page-dashboard" class="page">
+      <div class="stat-grid">
+        <div class="stat-card"><span class="stat-label">Omzet Hari Ini</span><span class="stat-val" id="dOmzetHari">Rp0</span><i class="ti ti-trending-up stat-ic"></i></div>
+        <div class="stat-card"><span class="stat-label">Omzet Total</span><span class="stat-val" id="dOmzetTotal">Rp0</span><i class="ti ti-coin stat-ic"></i></div>
+        <div class="stat-card"><span class="stat-label">Transaksi Hari Ini</span><span class="stat-val" id="dTrxHari">0</span><i class="ti ti-receipt stat-ic"></i></div>
+        <div class="stat-card"><span class="stat-label">Jenis Barang</span><span class="stat-val" id="dBarang">0</span><i class="ti ti-package stat-ic"></i></div>
+      </div>
+      <div class="dash-row">
+        <div class="card">
+          <div class="card-head"><h3>Omzet 7 Hari Terakhir</h3></div>
+          <canvas id="chartOmzet" height="120"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Produk Terlaris</h3></div>
+          <div id="topProduk" class="top-list"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3><i class="ti ti-alert-triangle"></i> Stok Menipis (≤5)</h3></div>
+        <div id="stokMenipis" class="chip-row"></div>
+      </div>
+    </section>
+
+    <!-- PENJUALAN -->
+    <section id="page-penjualan" class="page hidden">
+      <div class="dash-row">
+        <div class="card">
+          <div class="card-head"><h3>Pilih Barang</h3></div>
+          <div class="input-icon mb"><i class="ti ti-search"></i><input id="searchJual" placeholder="cari nama / kode barang..." /></div>
+          <div id="produkList" class="produk-grid"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3><i class="ti ti-shopping-cart"></i> Keranjang</h3></div>
+          <div id="cartList" class="cart-list"></div>
+          <div class="cart-total"><span>Total</span><strong id="cartTotal">Rp0</strong></div>
+          <button id="btnCheckout" class="btn btn-primary btn-block"><i class="ti ti-check"></i> Proses Penjualan</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- INPUT BARANG -->
+    <section id="page-input" class="page hidden">
+      <div class="card form-card">
+        <div class="card-head"><h3>Input Barang Baru</h3></div>
+        <div class="form-grid">
+          <div class="field"><label>Kode Barang</label><input id="ibKode" placeholder="SNK001" /></div>
+          <div class="field"><label>Nama Barang</label><input id="ibNama" placeholder="Chitato 68g" /></div>
+          <div class="field"><label>Kategori</label><input id="ibKategori" placeholder="Keripik" /></div>
+          <div class="field"><label>Harga Beli</label><input id="ibBeli" type="number" placeholder="8000" /></div>
+          <div class="field"><label>Harga Jual</label><input id="ibJual" type="number" placeholder="10000" /></div>
+          <div class="field"><label>Stok Awal</label><input id="ibStok" type="number" placeholder="50" /></div>
+        </div>
+        <button id="btnInputBarang" class="btn btn-primary"><i class="ti ti-plus"></i> Simpan Barang</button>
+        <p id="ibMsg" class="msg"></p>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Daftar Barang</h3></div>
+        <div class="table-wrap"><table id="tblBarang"><thead><tr><th>Kode</th><th>Nama</th><th>Kategori</th><th>Beli</th><th>Jual</th><th>Stok</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- TAMBAH STOK -->
+    <section id="page-stok" class="page hidden">
+      <div class="card form-card">
+        <div class="card-head"><h3>Tambah Stok Barang</h3></div>
+        <div class="form-grid">
+          <div class="field"><label>Pilih Barang</label><select id="tsKode"></select></div>
+          <div class="field"><label>Jumlah Tambah</label><input id="tsQty" type="number" placeholder="20" /></div>
+        </div>
+        <button id="btnTambahStok" class="btn btn-primary"><i class="ti ti-stack-2"></i> Tambah Stok</button>
+        <p id="tsMsg" class="msg"></p>
+      </div>
+    </section>
+
+    <!-- RIWAYAT -->
+    <section id="page-riwayat" class="page hidden">
+      <div class="card">
+        <div class="card-head"><h3>Riwayat Penjualan</h3></div>
+        <div class="filter-row">
+          <div class="field"><label>Dari Tanggal</label><input id="rwFrom" type="date" /></div>
+          <div class="field"><label>Sampai Tanggal</label><input id="rwTo" type="date" /></div>
+          <div class="field"><label>Cari</label><input id="rwQ" placeholder="nama / kode / id transaksi" /></div>
+          <button id="btnFilter" class="btn btn-primary"><i class="ti ti-filter"></i> Filter</button>
+        </div>
+        <div class="riwayat-sum"><span>Total ditemukan: <strong id="rwCount">0</strong></span><span>Total omzet: <strong id="rwSum">Rp0</strong></span></div>
+        <div class="table-wrap"><table id="tblRiwayat"><thead><tr><th>ID</th><th>Tanggal</th><th>Barang</th><th>Qty</th><th>Harga</th><th>Total</th><th>Kasir</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
