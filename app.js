@@ -13,8 +13,18 @@ let chartOmzet = null;
 /* ---------- API helper (GET, hindari CORS) ---------- */
 async function api(action, params = {}) {
   const qs = new URLSearchParams({ action, ...params });
-  const res = await fetch(`${API_URL}?${qs.toString()}`);
-  return res.json();
+  try {
+    const res = await fetch(`${API_URL}?${qs.toString()}`);
+    const text = await res.text();
+    try {
+      return JSON.parse(text);
+    } catch (parseErr) {
+      // backend mengembalikan HTML (biasanya karena belum di-deploy ulang / action belum dikenal)
+      return { ok: false, msg: 'Server tidak mengembalikan data valid. Pastikan Web App sudah di-deploy ulang versi terbaru.' };
+    }
+  } catch (err) {
+    return { ok: false, msg: 'Gagal terhubung ke server. Cek koneksi & API_URL.' };
+  }
 }
 
 const $ = id => document.getElementById(id);
