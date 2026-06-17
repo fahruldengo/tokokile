@@ -44,6 +44,7 @@
       <a class="nav-item" data-page="stok"><i class="ti ti-stack-2"></i> Tambah Stok</a>
       <a class="nav-item" data-page="riwayat"><i class="ti ti-history"></i> Riwayat</a>
       <a class="nav-item" data-page="hutang"><i class="ti ti-notebook"></i> Daftar Hutang</a>
+      <a class="nav-item" data-page="laba"><i class="ti ti-report-money"></i> Laba</a>
     </nav>
     <div class="side-foot">
       <div class="user-box">
@@ -66,6 +67,7 @@
       <div class="stat-grid">
         <div class="stat-card"><span class="stat-label">Omzet Hari Ini</span><span class="stat-val" id="dOmzetHari">Rp0</span><i class="ti ti-trending-up stat-ic"></i></div>
         <div class="stat-card"><span class="stat-label">Omzet Total</span><span class="stat-val" id="dOmzetTotal">Rp0</span><i class="ti ti-coin stat-ic"></i></div>
+        <div class="stat-card"><span class="stat-label">Laba Total</span><span class="stat-val" id="dLabaTotal" style="color:var(--green)">Rp0</span><i class="ti ti-trending-up stat-ic"></i></div>
         <div class="stat-card"><span class="stat-label">Transaksi Hari Ini</span><span class="stat-val" id="dTrxHari">0</span><i class="ti ti-receipt stat-ic"></i></div>
         <div class="stat-card"><span class="stat-label">Jenis Barang</span><span class="stat-val" id="dBarang">0</span><i class="ti ti-package stat-ic"></i></div>
       </div>
@@ -111,7 +113,7 @@
           </div>
 
           <div class="field" id="bayarWrap"><label>Uang Dibayar</label>
-            <div class="input-icon"><i class="ti ti-coin"></i><input id="jualBayar" type="number" placeholder="0" /></div>
+            <div class="input-icon"><span class="rp-mark">Rp</span><input id="jualBayar" type="number" placeholder="0" /></div>
             <div class="kembalian-row" id="kembalianRow">Kembalian: <strong id="jualKembalian">Rp0</strong></div>
           </div>
 
@@ -128,16 +130,17 @@
           <div class="field"><label>Kode Barang</label><input id="ibKode" placeholder="SNK001" /></div>
           <div class="field"><label>Nama Barang</label><input id="ibNama" placeholder="Chitato 68g" /></div>
           <div class="field"><label>Kategori</label><input id="ibKategori" placeholder="Keripik" /></div>
-          <div class="field"><label>Harga Beli</label><input id="ibBeli" type="number" placeholder="8000" /></div>
-          <div class="field"><label>Harga Jual</label><input id="ibJual" type="number" placeholder="10000" /></div>
+          <div class="field"><label>Harga Beli (total)</label><input id="ibBeli" type="number" placeholder="8000" /></div>
           <div class="field"><label>Stok Awal</label><input id="ibStok" type="number" placeholder="50" /></div>
+          <div class="field"><label>Harga Modal / pcs <span class="auto-tag">otomatis</span></label><input id="ibPcs" type="number" placeholder="0" readonly /></div>
+          <div class="field"><label>Harga Jual / pcs</label><input id="ibJual" type="number" placeholder="10000" /></div>
         </div>
         <button id="btnInputBarang" class="btn btn-primary"><i class="ti ti-plus"></i> Simpan Barang</button>
         <p id="ibMsg" class="msg"></p>
       </div>
       <div class="card">
         <div class="card-head"><h3>Daftar Barang</h3></div>
-        <div class="table-wrap"><table id="tblBarang"><thead><tr><th>Kode</th><th>Nama</th><th>Kategori</th><th>Beli</th><th>Jual</th><th>Stok</th></tr></thead><tbody></tbody></table></div>
+        <div class="table-wrap"><table id="tblBarang"><thead><tr><th>Kode</th><th>Nama</th><th>Kategori</th><th>Beli</th><th>Modal/pcs</th><th>Jual</th><th>Stok</th></tr></thead><tbody></tbody></table></div>
       </div>
     </section>
 
@@ -172,12 +175,36 @@
     <!-- DAFTAR HUTANG -->
     <section id="page-hutang" class="page hidden">
       <div class="stat-grid" style="grid-template-columns:repeat(2,1fr);max-width:520px">
-        <div class="stat-card"><span class="stat-label">Total Hutang Belum Lunas</span><span class="stat-val" id="hTotal">Rp0</span><i class="ti ti-cash-banknote stat-ic"></i></div>
-        <div class="stat-card"><span class="stat-label">Jumlah Transaksi Hutang</span><span class="stat-val" id="hCount">0</span><i class="ti ti-notebook stat-ic"></i></div>
+        <div class="stat-card"><span class="stat-label">Total Sisa Hutang</span><span class="stat-val" id="hTotal">Rp0</span><i class="ti ti-cash-banknote stat-ic"></i></div>
+        <div class="stat-card"><span class="stat-label">Transaksi Belum Lunas</span><span class="stat-val" id="hCount">0</span><i class="ti ti-notebook stat-ic"></i></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3><i class="ti ti-users"></i> Rekap Hutang per Pembeli</h3></div>
+        <div class="table-wrap"><table id="tblRekap"><thead><tr><th>Pembeli</th><th>Jml Trx</th><th>Total</th><th>Terbayar</th><th>Sisa</th></tr></thead><tbody></tbody></table></div>
       </div>
       <div class="card">
         <div class="card-head"><h3>Daftar Hutang Belum Lunas</h3></div>
         <div id="hutangList" class="hutang-list"></div>
+      </div>
+    </section>
+
+    <!-- LABA -->
+    <section id="page-laba" class="page hidden">
+      <div class="filter-row" style="grid-template-columns:1fr 1fr auto auto">
+        <div class="field"><label>Dari Tanggal</label><input id="lbFrom" type="date" /></div>
+        <div class="field"><label>Sampai Tanggal</label><input id="lbTo" type="date" /></div>
+        <button id="btnLabaFilter" class="btn btn-primary"><i class="ti ti-filter"></i> Filter</button>
+        <button id="btnLabaReset" class="btn btn-ghost"><i class="ti ti-x"></i> Reset</button>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card"><span class="stat-label">Total Laba</span><span class="stat-val" id="lbLaba" style="color:var(--green)">Rp0</span><i class="ti ti-trending-up stat-ic"></i></div>
+        <div class="stat-card"><span class="stat-label">Total Omzet</span><span class="stat-val" id="lbOmzet">Rp0</span><i class="ti ti-coin stat-ic"></i></div>
+        <div class="stat-card"><span class="stat-label">Total Modal</span><span class="stat-val" id="lbModal">Rp0</span><i class="ti ti-receipt stat-ic"></i></div>
+        <div class="stat-card"><span class="stat-label">Margin Laba</span><span class="stat-val" id="lbMargin">0%</span><i class="ti ti-percentage stat-ic"></i></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Laba per Produk</h3></div>
+        <div class="table-wrap"><table id="tblLaba"><thead><tr><th>Produk</th><th>Qty Terjual</th><th>Omzet</th><th>Modal</th><th>Laba</th></tr></thead><tbody></tbody></table></div>
       </div>
     </section>
   </main>
@@ -189,7 +216,8 @@
     <div id="strukContent" class="struk-content"></div>
     <div class="struk-actions">
       <button class="btn btn-ghost" onclick="tutupStruk()"><i class="ti ti-x"></i> Tutup</button>
-      <button class="btn btn-primary" onclick="cetakStruk()"><i class="ti ti-printer"></i> Cetak</button>
+      <button class="btn btn-ghost" onclick="cetakStruk()"><i class="ti ti-printer"></i> Cetak</button>
+      <button class="btn btn-primary" onclick="downloadStrukPDF()"><i class="ti ti-download"></i> PDF</button>
     </div>
   </div>
 </div>
@@ -197,6 +225,7 @@
 <div id="toast" class="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
