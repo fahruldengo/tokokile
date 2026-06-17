@@ -19,6 +19,8 @@ async function api(action, params = {}) {
 
 const $ = id => document.getElementById(id);
 const rp = n => 'Rp' + Number(n || 0).toLocaleString('id-ID');
+// konversi nilai ke bilangan bulat aman; jika bukan angka (mis. teks/tanggal) -> 0
+const safeInt = v => { const n = Number(v); return Number.isFinite(n) ? Math.trunc(n) : 0; };
 
 function toast(msg, type = '') {
   const t = $('toast');
@@ -100,7 +102,7 @@ function renderTblBarang() {
     <tr>
       <td>${b.kode}</td><td>${b.nama}</td><td>${b.kategori}</td>
       <td>${rp(b.harga_beli)}</td><td>${rp(b.harga_pcs)}</td><td>${rp(b.harga_jual)}</td>
-      <td><span class="badge-stok ${Number(b.stok)<=5?'low':'ok'}">${b.stok}</span></td>
+      <td><span class="badge-stok ${safeInt(b.stok)<=5?'low':'ok'}">${safeInt(b.stok)}</span></td>
     </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted)">Belum ada barang</td></tr>';
 }
 
@@ -154,20 +156,24 @@ function renderProdukJual(filter='') {
   const f = filter.toLowerCase();
   const list = BARANG.filter(b =>
     b.nama.toLowerCase().includes(f) || String(b.kode).toLowerCase().includes(f));
-  $('produkList').innerHTML = list.map(b => `
-    <div class="produk-item ${Number(b.stok)<=0?'out':''}" onclick="addCart('${b.kode}')">
+  $('produkList').innerHTML = list.map(b => {
+    const stok = safeInt(b.stok);
+    return `
+    <div class="produk-item ${stok<=0?'out':''}" onclick="addCart('${b.kode}')">
       <div class="pn">${b.nama}</div>
       <div class="pp">${rp(b.harga_jual)}</div>
-      <div class="ps">Stok: ${b.stok}</div>
-    </div>`).join('') || '<p style="color:var(--muted)">Tidak ada barang</p>';
+      <div class="ps">Stok: ${stok}</div>
+    </div>`;
+  }).join('') || '<p style="color:var(--muted)">Tidak ada barang</p>';
 }
 $('searchJual').oninput = e => renderProdukJual(e.target.value);
 
 window.addCart = (kode) => {
   const b = BARANG.find(x => String(x.kode)===String(kode));
+  const stok = safeInt(b.stok);
   const ex = CART.find(c => c.kode===kode);
-  if (ex) { if (ex.qty < Number(b.stok)) ex.qty++; else { toast('Stok tidak cukup','err'); return; } }
-  else CART.push({ kode, nama:b.nama, harga:Number(b.harga_jual), qty:1, stok:Number(b.stok) });
+  if (ex) { if (ex.qty < stok) ex.qty++; else { toast('Stok tidak cukup','err'); return; } }
+  else CART.push({ kode, nama:b.nama, harga:Number(b.harga_jual)||0, qty:1, stok:stok });
   renderCart();
 };
 window.changeQty = (kode, d) => {
