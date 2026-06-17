@@ -43,6 +43,7 @@
       <a class="nav-item" data-page="input"><i class="ti ti-package"></i> Input Barang</a>
       <a class="nav-item" data-page="stok"><i class="ti ti-stack-2"></i> Tambah Stok</a>
       <a class="nav-item" data-page="riwayat"><i class="ti ti-history"></i> Riwayat</a>
+      <a class="nav-item" data-page="hutang"><i class="ti ti-notebook"></i> Daftar Hutang</a>
     </nav>
     <div class="side-foot">
       <div class="user-box">
@@ -167,7 +168,30 @@
         <div class="table-wrap"><table id="tblRiwayat"><thead><tr><th>ID</th><th>Tanggal</th><th>Pembeli</th><th>Barang</th><th>Qty</th><th>Total</th><th>Metode</th><th>Kasir</th></tr></thead><tbody></tbody></table></div>
       </div>
     </section>
+
+    <!-- DAFTAR HUTANG -->
+    <section id="page-hutang" class="page hidden">
+      <div class="stat-grid" style="grid-template-columns:repeat(2,1fr);max-width:520px">
+        <div class="stat-card"><span class="stat-label">Total Hutang Belum Lunas</span><span class="stat-val" id="hTotal">Rp0</span><i class="ti ti-cash-banknote stat-ic"></i></div>
+        <div class="stat-card"><span class="stat-label">Jumlah Transaksi Hutang</span><span class="stat-val" id="hCount">0</span><i class="ti ti-notebook stat-ic"></i></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Daftar Hutang Belum Lunas</h3></div>
+        <div id="hutangList" class="hutang-list"></div>
+      </div>
+    </section>
   </main>
+</div>
+
+<!-- ============ STRUK / RECEIPT (untuk cetak) ============ -->
+<div id="strukOverlay" class="struk-overlay hidden">
+  <div class="struk-box">
+    <div id="strukContent" class="struk-content"></div>
+    <div class="struk-actions">
+      <button class="btn btn-ghost" onclick="tutupStruk()"><i class="ti ti-x"></i> Tutup</button>
+      <button class="btn btn-primary" onclick="cetakStruk()"><i class="ti ti-printer"></i> Cetak</button>
+    </div>
+  </div>
 </div>
 
 <div id="toast" class="toast"></div>
