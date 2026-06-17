@@ -200,6 +200,23 @@
         <div class="stat-card"><span class="stat-label">Total Sisa Hutang</span><span class="stat-val" id="hTotal">Rp0</span><i class="ti ti-cash-banknote stat-ic"></i></div>
         <div class="stat-card"><span class="stat-label">Transaksi Belum Lunas</span><span class="stat-val" id="hCount">0</span><i class="ti ti-notebook stat-ic"></i></div>
       </div>
+      <div class="card form-card">
+        <div class="card-head"><h3><i class="ti ti-history"></i> Catat Hutang Lama</h3></div>
+        <p class="form-hint">Untuk hutang dari sebelum sistem dibuat. Tercatat di daftar hutang tanpa mengubah stok barang.</p>
+        <div class="form-grid">
+          <div class="field"><label>Nama Pembeli</label><input id="hlPembeli" placeholder="nama pembeli" /></div>
+          <div class="field"><label>Keterangan / Barang</label><input id="hlKet" placeholder="mis. utang rokok & kopi" /></div>
+          <div class="field"><label>Total Hutang</label>
+            <div class="input-icon"><span class="rp-mark">Rp</span><input id="hlTotal" type="number" placeholder="50000" /></div>
+          </div>
+          <div class="field"><label>Sudah Terbayar <span class="auto-tag">opsional</span></label>
+            <div class="input-icon"><span class="rp-mark">Rp</span><input id="hlTerbayar" type="number" placeholder="0" /></div>
+          </div>
+          <div class="field"><label>Tanggal Hutang <span class="auto-tag">opsional</span></label><input id="hlTanggal" type="date" /></div>
+        </div>
+        <button id="btnCatatHutangLama" class="btn btn-primary"><i class="ti ti-plus"></i> Catat Hutang</button>
+        <p id="hlMsg" class="msg"></p>
+      </div>
       <div class="card">
         <div class="card-head"><h3><i class="ti ti-users"></i> Rekap Hutang per Pembeli</h3></div>
         <div class="table-wrap"><table id="tblRekap"><thead><tr><th>Pembeli</th><th>Jml Trx</th><th>Total</th><th>Terbayar</th><th>Sisa</th></tr></thead><tbody></tbody></table></div>
