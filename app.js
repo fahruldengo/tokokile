@@ -577,12 +577,15 @@ async function loadHutang() {
   if (!r.data.length) { el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">Tidak ada hutang. Semua lunas!</p>'; return; }
   el.innerHTML = r.data.map((t, idx) => {
     const tglStr = new Date(t.tanggal).toLocaleString('id-ID', { dateStyle:'medium', timeStyle:'short' });
-    const detail = t.items.map(i => `${i.nama} (${i.qty}×)`).join(', ');
+    const detail = t.isLama
+      ? t.items.map(i => i.nama).join(', ')
+      : t.items.map(i => `${i.nama} (${i.qty}×)`).join(', ');
+    const lamaBadge = t.isLama ? ' <span class="badge-lama">hutang lama</span>' : '';
     HUTANG_CACHE[t.id] = t;
     return `
     <div class="hutang-item">
       <div class="hutang-main">
-        <div class="hutang-name"><i class="ti ti-user"></i> ${t.pembeli}</div>
+        <div class="hutang-name"><i class="ti ti-user"></i> ${t.pembeli}${lamaBadge}</div>
         <div class="hutang-detail">${detail}</div>
         <div class="hutang-meta">${t.id} · ${tglStr} · kasir ${t.kasir}</div>
         <div class="hutang-progress">Terbayar ${rp(t.terbayar)} / ${rp(t.total)}</div>
@@ -599,6 +602,29 @@ async function loadHutang() {
 }
 
 const HUTANG_CACHE = {};
+
+/* ---------- CATAT HUTANG LAMA ---------- */
+$('btnCatatHutangLama').onclick = async () => {
+  const p = {
+    pembeli: $('hlPembeli').value.trim(),
+    keterangan: $('hlKet').value.trim(),
+    total: $('hlTotal').value,
+    terbayar: $('hlTerbayar').value || 0,
+    kasir: CURRENT_USER.nama
+  };
+  if ($('hlTanggal').value) p.tanggal = $('hlTanggal').value + ' 00:00:00';
+  const msg = $('hlMsg');
+  if (!p.pembeli) { msg.className='msg err'; msg.textContent='Nama pembeli wajib diisi'; return; }
+  if (!p.total || Number(p.total) <= 0) { msg.className='msg err'; msg.textContent='Total hutang harus lebih dari 0'; return; }
+  if (Number(p.terbayar) > Number(p.total)) { msg.className='msg err'; msg.textContent='Terbayar tidak boleh melebihi total'; return; }
+  msg.className='msg'; msg.textContent='Menyimpan...';
+  const r = await api('catatHutangLama', p);
+  if (r.ok) {
+    toast('Hutang lama dicatat', 'ok'); msg.className='msg ok'; msg.textContent=`${r.msg}. Sisa: ${rp(r.sisa)}`;
+    ['hlPembeli','hlKet','hlTotal','hlTerbayar','hlTanggal'].forEach(i=>$(i).value='');
+    loadHutang(); loadDashboard();
+  } else { msg.className='msg err'; msg.textContent=r.msg; }
+};
 
 window.bukaCicilan = (id) => {
   const t = HUTANG_CACHE[id];
