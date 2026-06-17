@@ -176,6 +176,21 @@ tr:hover td{background:var(--bg)}
 .struk-actions{display:flex;gap:10px;padding:0 24px 22px}
 .struk-actions .btn{flex:1}
 
+/* ---------- edit modal ---------- */
+.modal-overlay{position:fixed;inset:0;background:rgba(20,30,60,.5);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px}
+.modal-box{background:var(--surface);border-radius:var(--radius);width:100%;max-width:560px;max-height:90vh;overflow:auto;padding:22px 24px}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.modal-head h3{font-size:17px;font-weight:700}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:8px}
+
+/* ---------- table action buttons ---------- */
+.row-actions{display:flex;gap:6px}
+.icon-act{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--surface);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:16px;transition:.15s}
+.icon-act.edit{color:var(--primary)}
+.icon-act.edit:hover{background:var(--primary-soft);border-color:var(--primary)}
+.icon-act.del{color:var(--red)}
+.icon-act.del:hover{background:var(--red-soft);border-color:var(--red)}
+
 /* ---------- responsive ---------- */
 @media(max-width:900px){
   .stat-grid{grid-template-columns:repeat(2,1fr)}
