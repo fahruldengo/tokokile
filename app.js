@@ -304,9 +304,10 @@ function drawChart(grafik) {
     }]},
     options: {
       plugins:{ legend:{display:false} },
+      responsive:true,
+      maintainAspectRatio:false,
       scales:{ y:{ beginAtZero:true, ticks:{ callback:v=>'Rp'+(v/1000)+'k' }, grid:{color:'#eef0f5'} },
-               x:{ grid:{display:false} } },
-      maintainAspectRatio:false
+               x:{ grid:{display:false} } }
     }
   });
 }
