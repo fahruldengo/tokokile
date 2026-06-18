@@ -106,8 +106,13 @@ async function loadBarang() {
   renderProdukJual();
 }
 
-function renderTblBarang() {
-  const rows = BARANG.map(b => {
+function barangRowsHTML(filter='') {
+  const f = filter.trim().toLowerCase();
+  const list = f ? BARANG.filter(b =>
+    String(b.nama).toLowerCase().includes(f) ||
+    String(b.kode).toLowerCase().includes(f) ||
+    String(b.kategori).toLowerCase().includes(f)) : BARANG;
+  return list.map(b => {
     const stok = safeInt(b.stok);
     const kode = String(b.kode).replace(/'/g, "\\'");
     return `
@@ -120,10 +125,19 @@ function renderTblBarang() {
         <button class="icon-act del" title="Hapus" onclick="hapusBarang('${kode}')"><i class="ti ti-trash"></i></button>
       </div></td>
     </tr>`;
-  }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--muted)">Belum ada barang</td></tr>';
-  $('tblBarang').querySelector('tbody').innerHTML = rows;
+  }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--muted)">Tidak ada barang</td></tr>';
+}
+
+function renderTblBarang() {
+  $('tblBarang').querySelector('tbody').innerHTML = barangRowsHTML();
   const stokTbl = $('tblBarangStok');
-  if (stokTbl) stokTbl.querySelector('tbody').innerHTML = rows;
+  if (stokTbl) stokTbl.querySelector('tbody').innerHTML = barangRowsHTML($('searchStok') ? $('searchStok').value : '');
+}
+// pencarian di tabel barang menu Tambah Stok
+if (document.getElementById('searchStok')) {
+  $('searchStok').addEventListener('input', e => {
+    $('tblBarangStok').querySelector('tbody').innerHTML = barangRowsHTML(e.target.value);
+  });
 }
 
 /* auto-hitung harga modal per pcs = harga beli / stok awal */
@@ -661,6 +675,8 @@ function downloadStrukGabunganPDF(t) {
 }
 
 /* ---------- DAFTAR HUTANG + CICILAN ---------- */
+let HUTANG_DATA = [];
+
 async function loadHutang() {
   const r = await api('hutang'); if (!r.ok) return;
   $('hTotal').textContent = rp(r.totalHutang);
@@ -673,18 +689,36 @@ async function loadHutang() {
     <td><strong style="color:var(--red)">${rp(x.sisa)}</strong></td></tr>`).join('')
     : '<tr><td colspan="5" style="text-align:center;color:var(--muted)">Tidak ada hutang</td></tr>';
 
+  HUTANG_DATA = r.data;
+  r.data.forEach(t => HUTANG_CACHE[t.id] = t);
+  SELECTED_HUTANG = {};
+  renderHutangList($('searchHutang') ? $('searchHutang').value : '');
+  updateBayarBar();
+}
+
+function renderHutangList(filter='') {
   const el = $('hutangList');
-  if (!r.data.length) { el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">Tidak ada hutang. Semua lunas!</p>'; SELECTED_HUTANG = {}; updateBayarBar(); return; }
-  el.innerHTML = r.data.map((t, idx) => {
+  const f = filter.trim().toLowerCase();
+  const list = f ? HUTANG_DATA.filter(t => {
+    const ket = (t.items || []).map(i => i.nama).join(' ');
+    return String(t.pembeli).toLowerCase().includes(f) ||
+           String(t.id).toLowerCase().includes(f) ||
+           ket.toLowerCase().includes(f);
+  }) : HUTANG_DATA;
+
+  if (!HUTANG_DATA.length) { el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">Tidak ada hutang. Semua lunas!</p>'; return; }
+  if (!list.length) { el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">Tidak ada hutang yang cocok dengan pencarian.</p>'; return; }
+
+  el.innerHTML = list.map(t => {
     const tglStr = new Date(t.tanggal).toLocaleString('id-ID', { dateStyle:'medium', timeStyle:'short' });
     const detail = t.isLama
       ? t.items.map(i => i.nama).join(', ')
       : t.items.map(i => `${i.nama} (${i.qty}×)`).join(', ');
     const lamaBadge = t.isLama ? ' <span class="badge-lama">hutang lama</span>' : '';
-    HUTANG_CACHE[t.id] = t;
+    const checked = SELECTED_HUTANG[t.id] ? 'checked' : '';
     return `
     <div class="hutang-item">
-      <label class="hutang-check"><input type="checkbox" onchange="toggleHutang('${t.id}', this.checked)"></label>
+      <label class="hutang-check"><input type="checkbox" ${checked} onchange="toggleHutang('${t.id}', this.checked)"></label>
       <div class="hutang-main">
         <div class="hutang-name"><i class="ti ti-user"></i> ${t.pembeli}${lamaBadge}</div>
         <div class="hutang-detail">${detail}</div>
@@ -700,8 +734,10 @@ async function loadHutang() {
       </div>
     </div>`;
   }).join('');
-  SELECTED_HUTANG = {};
-  updateBayarBar();
+}
+// pencarian daftar hutang
+if (document.getElementById('searchHutang')) {
+  $('searchHutang').addEventListener('input', e => renderHutangList(e.target.value));
 }
 
 const HUTANG_CACHE = {};
