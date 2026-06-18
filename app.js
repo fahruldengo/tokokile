@@ -491,6 +491,41 @@ function tampilStruk(t) {
   $('strukOverlay').classList.remove('hidden');
 }
 window.tutupStruk = () => $('strukOverlay').classList.add('hidden');
+
+// Struk gabungan pembayaran beberapa hutang sekaligus
+function tampilStrukGabungan(snapshot, hasil) {
+  const tgl = new Date();
+  const tglStr = tgl.toLocaleString('id-ID', { dateStyle:'medium', timeStyle:'short' });
+  const detailMap = {};
+  (hasil.detail || []).forEach(d => detailMap[d.id] = d);
+
+  const baris = snapshot.map(s => {
+    const d = detailMap[s.id] || { dibayar: 0, sisa: s.sisaSebelum, lunas: false };
+    const status = d.lunas ? 'LUNAS' : 'sisa ' + rp(d.sisa);
+    return `<tr>
+      <td>${s.pembeli}<br><span class="sk-sub">${s.id}</span></td>
+      <td class="sk-r">${rp(d.dibayar)}<br><span class="sk-sub">${status}</span></td>
+    </tr>`;
+  }).join('');
+
+  LAST_STRUK = { gabungan: true, tanggal: tgl, kasir: CURRENT_USER.nama, snapshot, hasil };
+
+  $('strukContent').innerHTML = `
+    <div class="sk-head"><h2>SnackPOS</h2><p>Bukti Pembayaran Hutang</p></div>
+    <div class="sk-meta">
+      <div><span>Tanggal</span><span>${tglStr}</span></div>
+      <div><span>Kasir</span><span>${CURRENT_USER.nama}</span></div>
+      <div><span>Jml Hutang</span><span>${snapshot.length}</span></div>
+      <div><span>Lunas</span><span>${hasil.jmlLunas}</span></div>
+    </div>
+    <table class="sk-table"><tbody>${baris}</tbody></table>
+    <div class="sk-line sk-total"><span>TOTAL DIBAYAR</span><span>${rp(hasil.dibayar)}</span></div>
+    <div class="sk-line"><span>Sisa hutang</span><span>${rp(hasil.sisaTotal)}</span></div>
+    <div class="sk-foot">Terima kasih</div>
+  `;
+  $('strukOverlay').classList.remove('hidden');
+}
+
 window.cetakStruk = () => {
   const isi = $('strukContent').innerHTML;
   const w = window.open('', '', 'width=320,height=600');
@@ -516,6 +551,13 @@ window.downloadStrukPDF = () => {
   const t = LAST_STRUK;
   if (!t) { toast('Tidak ada struk', 'err'); return; }
   const { jsPDF } = window.jspdf;
+
+  // struk gabungan pembayaran beberapa hutang
+  if (t.gabungan) {
+    downloadStrukGabunganPDF(t);
+    return;
+  }
+
   // struk thermal 58mm => 58 x dynamic
   const lebar = 58;
   const tinggi = 90 + t.items.length * 8 + (t.metode === 'tunai' ? 16 : 12);
@@ -570,6 +612,54 @@ window.downloadStrukPDF = () => {
   toast('Struk PDF diunduh', 'ok');
 };
 
+function downloadStrukGabunganPDF(t) {
+  const { jsPDF } = window.jspdf;
+  const snapshot = t.snapshot || [];
+  const hasil = t.hasil || {};
+  const detailMap = {};
+  (hasil.detail || []).forEach(d => detailMap[d.id] = d);
+
+  const lebar = 58;
+  const tinggi = 70 + snapshot.length * 9;
+  const doc = new jsPDF({ unit:'mm', format:[lebar, tinggi] });
+  let y = 8;
+  const cx = lebar / 2;
+  const tglStr = new Date(t.tanggal).toLocaleString('id-ID', { dateStyle:'medium', timeStyle:'short' });
+
+  doc.setFont('courier','bold'); doc.setFontSize(13);
+  doc.text('SnackPOS', cx, y, { align:'center' }); y += 4;
+  doc.setFont('courier','normal'); doc.setFontSize(8);
+  doc.text('Bukti Pembayaran Hutang', cx, y, { align:'center' }); y += 4;
+  doc.text('--------------------------------', cx, y, { align:'center' }); y += 4;
+
+  doc.setFontSize(7.5);
+  [['Tanggal', tglStr], ['Kasir', t.kasir], ['Jml Hutang', String(snapshot.length)], ['Lunas', String(hasil.jmlLunas || 0)]]
+    .forEach(m => { doc.text(m[0], 3, y); doc.text(m[1], lebar-3, y, { align:'right' }); y += 3.5; });
+  doc.text('--------------------------------', cx, y, { align:'center' }); y += 4;
+
+  doc.setFontSize(7.5);
+  snapshot.forEach(s => {
+    const d = detailMap[s.id] || { dibayar: 0, sisa: s.sisaSebelum, lunas: false };
+    doc.text((s.pembeli + ' · ' + s.id).substring(0,30), 3, y); y += 3.3;
+    doc.setFontSize(7);
+    const status = d.lunas ? 'LUNAS' : 'sisa ' + rp(d.sisa);
+    doc.text('bayar ' + rp(d.dibayar), 3, y);
+    doc.text(status, lebar-3, y, { align:'right' });
+    doc.setFontSize(7.5); y += 4;
+  });
+  doc.text('--------------------------------', cx, y, { align:'center' }); y += 4;
+
+  doc.setFont('courier','bold'); doc.setFontSize(9);
+  doc.text('TOTAL DIBAYAR', 3, y); doc.text(rp(hasil.dibayar || 0), lebar-3, y, { align:'right' }); y += 4.5;
+  doc.setFont('courier','normal'); doc.setFontSize(8);
+  doc.text('Sisa hutang', 3, y); doc.text(rp(hasil.sisaTotal || 0), lebar-3, y, { align:'right' }); y += 5;
+  doc.setFontSize(7);
+  doc.text('Terima kasih', cx, y, { align:'center' });
+
+  doc.save(`pembayaran-hutang-${new Date().getTime()}.pdf`);
+  toast('Struk PDF diunduh', 'ok');
+}
+
 /* ---------- DAFTAR HUTANG + CICILAN ---------- */
 async function loadHutang() {
   const r = await api('hutang'); if (!r.ok) return;
@@ -584,7 +674,7 @@ async function loadHutang() {
     : '<tr><td colspan="5" style="text-align:center;color:var(--muted)">Tidak ada hutang</td></tr>';
 
   const el = $('hutangList');
-  if (!r.data.length) { el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">Tidak ada hutang. Semua lunas!</p>'; return; }
+  if (!r.data.length) { el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">Tidak ada hutang. Semua lunas!</p>'; SELECTED_HUTANG = {}; updateBayarBar(); return; }
   el.innerHTML = r.data.map((t, idx) => {
     const tglStr = new Date(t.tanggal).toLocaleString('id-ID', { dateStyle:'medium', timeStyle:'short' });
     const detail = t.isLama
@@ -594,6 +684,7 @@ async function loadHutang() {
     HUTANG_CACHE[t.id] = t;
     return `
     <div class="hutang-item">
+      <label class="hutang-check"><input type="checkbox" onchange="toggleHutang('${t.id}', this.checked)"></label>
       <div class="hutang-main">
         <div class="hutang-name"><i class="ti ti-user"></i> ${t.pembeli}${lamaBadge}</div>
         <div class="hutang-detail">${detail}</div>
@@ -609,9 +700,65 @@ async function loadHutang() {
       </div>
     </div>`;
   }).join('');
+  SELECTED_HUTANG = {};
+  updateBayarBar();
 }
 
 const HUTANG_CACHE = {};
+let SELECTED_HUTANG = {};
+
+/* ---------- PILIH & BAYAR BANYAK HUTANG ---------- */
+window.toggleHutang = (id, checked) => {
+  if (checked) SELECTED_HUTANG[id] = true;
+  else delete SELECTED_HUTANG[id];
+  updateBayarBar();
+};
+
+function selectedSisaTotal() {
+  return Object.keys(SELECTED_HUTANG).reduce((s, id) => {
+    const t = HUTANG_CACHE[id];
+    return s + (t ? t.sisa : 0);
+  }, 0);
+}
+
+function updateBayarBar() {
+  const bar = $('bayarBar');
+  if (!bar) return;
+  const ids = Object.keys(SELECTED_HUTANG);
+  if (!ids.length) { bar.classList.add('hidden'); return; }
+  bar.classList.remove('hidden');
+  $('bbCount').textContent = ids.length;
+  $('bbTotal').textContent = rp(selectedSisaTotal());
+}
+
+window.bayarTerpilih = () => {
+  const ids = Object.keys(SELECTED_HUTANG);
+  if (!ids.length) { toast('Belum ada hutang dipilih', 'err'); return; }
+  const totalSisa = selectedSisaTotal();
+  const pembeliSet = [...new Set(ids.map(id => HUTANG_CACHE[id] && HUTANG_CACHE[id].pembeli).filter(Boolean))];
+  const labelPembeli = pembeliSet.length === 1 ? pembeliSet[0] : `${pembeliSet.length} pembeli`;
+  const input = prompt(
+    `Bayar ${ids.length} hutang (${labelPembeli})\nTotal sisa: ${rp(totalSisa)}\n\nMasukkan jumlah bayar (kosongkan = lunasi semua):`,
+    totalSisa
+  );
+  if (input === null) return;
+  const jumlah = input.trim() === '' ? totalSisa : Number(input);
+  if (isNaN(jumlah) || jumlah <= 0) { toast('Jumlah tidak valid', 'err'); return; }
+  prosesCicilanMulti(ids, jumlah);
+};
+
+async function prosesCicilanMulti(ids, jumlah) {
+  const snapshot = ids.map(id => {
+    const t = HUTANG_CACHE[id];
+    return { id, pembeli: t.pembeli, total: t.total, sisaSebelum: t.sisa, items: t.items, isLama: t.isLama };
+  });
+  const r = await api('bayarCicilanMulti', { ids: JSON.stringify(ids), jumlah });
+  if (!r.ok) { toast(r.msg, 'err'); return; }
+  toast(`${r.jmlLunas} hutang lunas · dibayar ${rp(r.dibayar)}`, 'ok');
+  tampilStrukGabungan(snapshot, r);
+  SELECTED_HUTANG = {};
+  loadHutang(); loadDashboard();
+}
 
 /* ---------- CATAT HUTANG LAMA ---------- */
 $('btnCatatHutangLama').onclick = async () => {
