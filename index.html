@@ -222,7 +222,13 @@
         <div class="table-wrap"><table id="tblRekap"><thead><tr><th>Pembeli</th><th>Jml Trx</th><th>Total</th><th>Terbayar</th><th>Sisa</th></tr></thead><tbody></tbody></table></div>
       </div>
       <div class="card">
-        <div class="card-head"><h3>Daftar Hutang Belum Lunas</h3></div>
+        <div class="card-head">
+          <h3>Daftar Hutang Belum Lunas</h3>
+          <div id="bayarBar" class="bayar-bar hidden">
+            <span><strong id="bbCount">0</strong> dipilih · <strong id="bbTotal">Rp0</strong></span>
+            <button class="btn btn-primary btn-sm" onclick="bayarTerpilih()"><i class="ti ti-cash"></i> Bayar Terpilih</button>
+          </div>
+        </div>
         <div id="hutangList" class="hutang-list"></div>
       </div>
     </section>
